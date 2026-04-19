@@ -6,9 +6,7 @@ Writes: data/finetuning/train.jsonl
 Extracted from the archived notebook `prepare_fine_tuning_data.ipynb`.
 """
 
-import json
 import os
-import random
 
 import pandas as pd
 
@@ -17,33 +15,10 @@ from src.data.formatting import (
     format_duch_2023_user_prompt,
     generate_demographic_prompt,
 )
+from src.utils.io import save_jsonl
+from src.utils.seed import RANDOM_STATE, set_seed
 
-RANDOM_STATE = 42
-random.seed(RANDOM_STATE)
-
-
-def save_jsonl(df: pd.DataFrame, path: str, text_column: str = "text") -> None:
-    """Save rows as JSONL lines: {"messages": [...]}.
-
-    Expects df[text_column] to be a JSON string or a Python list of message dicts.
-    """
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        for _, row in df.iterrows():
-            val = row.get(text_column)
-            if isinstance(val, str):
-                try:
-                    messages = json.loads(val)
-                except Exception:
-                    messages = [{"role": "assistant", "content": val}]
-            elif isinstance(val, list):
-                messages = val
-            else:
-                messages = [{"role": "assistant", "content": str(val)}]
-
-            out = {"messages": messages}
-            json.dump(out, f, ensure_ascii=False)
-            f.write("\n")
+set_seed(RANDOM_STATE)
 
 
 def build_duch_2023_corpus(
