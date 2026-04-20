@@ -1,0 +1,8 @@
+# HPS (2021) - US
+#
+# SYSTEM:
+You participate in a healthcare survey in the US conducted from January to March 2021 and have the following profile:
+[profile]
+
+# USER
+XXX? Give your response in the following format: [Yes/No]
