@@ -1,0 +1,141 @@
+# ===========================================================================
+# Configuration: artificially-intelligent-rct
+#
+# Centralised source for hyperparameters, model specifications, training,
+# and inference protocols.
+#
+# Pattern: defaults + overrides. Top-level `training`, `lora`, `inference`,
+# and `split` blocks provide defaults. Any model or RCT entry may override
+# any field by specifying it under its own block. Overrides are merged
+# field-by-field (src/utils/config.py).
+# ===========================================================================
+
+
+# ---------------------------------------------------------------------------
+# Training defaults (LoRA fine-tuning)
+# ---------------------------------------------------------------------------
+training:
+  epochs: 6
+  batch_size: 48                       # per-device
+  gradient_accumulation_steps: 1
+  learning_rate: 2.0e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.03
+  lr_scheduler: cosine
+  optimizer: adamw_torch
+  precision: bf16
+  max_seq_length: 2048
+  seeds: [42, 43, 44]
+
+
+# ---------------------------------------------------------------------------
+# LoRA defaults
+# ---------------------------------------------------------------------------
+lora:
+  r: 32
+  alpha: 64
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj]
+
+
+# ---------------------------------------------------------------------------
+# Inference defaults (open-source models only)
+# API models specify their inference parameters inside their own model block.
+# ---------------------------------------------------------------------------
+inference:
+  target_tokens: ["Yes", "No"]
+  precision: bf16
+  batch_size: 32
+  max_seq_length: 2048
+
+
+# ---------------------------------------------------------------------------
+# Train/test split defaults (applies to RCTs; surveys are train-only)
+# ---------------------------------------------------------------------------
+split:
+  method: subject_holdout
+  test_fraction: 0.2
+  stratify_by: treatment
+
+
+# ===========================================================================
+# Models
+# ===========================================================================
+models:
+
+  # --- Open-source models: fine-tuned with LoRA, inference via logit pass ---
+  llama_8b:
+    base_model: meta-llama/Llama-3.1-8B-Instruct
+    family: llama
+    type: open
+
+  llama_70b:
+    base_model: meta-llama/Llama-3.1-70B-Instruct
+    family: llama
+    type: open
+    training:                          # effective batch kept at 48
+      batch_size: 8
+      gradient_accumulation_steps: 6
+    lora:                              # 70B benefits from MLP modules
+      target_modules: [q_proj, k_proj, v_proj, o_proj,
+                       gate_proj, up_proj, down_proj]
+
+  qwen_8b:
+    base_model: Qwen/Qwen3-8B
+    family: qwen
+    type: open
+
+  qwen_70b:
+    base_model: Qwen/Qwen3-70B
+    family: qwen
+    type: open
+    training:
+      batch_size: 8
+      gradient_accumulation_steps: 6
+
+  # --- API model: inference-only, no fine-tuning ---
+  gpt5:
+    api_model: "TBD"
+    type: api
+    inference:                         # API parameters replace open-model defaults
+      temperature: 0.0
+      seed: 42
+      max_tokens: 5
+
+
+# ===========================================================================
+# Experimental conditions
+# Open models are evaluated in both conditions; API models in `instruct` only.
+# ===========================================================================
+conditions: [instruct, finetuned]
+
+
+# ===========================================================================
+# Data sources
+# ===========================================================================
+
+# RCTs (fine-tuning via training splits, evaluation via test splits).
+rcts:
+  rct_01:
+    outcome: "TBD"
+    treatments: ["TBD"]
+  rct_02:
+    outcome: "TBD"
+    treatments: ["TBD"]
+  rct_03:
+    outcome: "TBD"
+    treatments: ["TBD"]
+  rct_04:
+    outcome: "TBD"
+    treatments: ["TBD"]
+
+
+# ===========================================================================
+# Fine-tuning corpus composition
+# Which sources feed data/finetuning/train.jsonl. RCT contributions are
+# training splits only -- test splits are reserved for evaluation.
+# Omit sources to exclude them from the fine-tuning corpus (useful for ablations).
+# ===========================================================================
+finetuning:
+  surveys: [survey_01, survey_02]
+  rcts: [rct_01, rct_02, rct_03, rct_04]
