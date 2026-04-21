@@ -16,7 +16,7 @@
 # ---------------------------------------------------------------------------
 training:
   epochs: 6
-  batch_size: 48                       # per-device
+  batch_size: 8                       # per-device
   gradient_accumulation_steps: 1
   learning_rate: 2.0e-4
   weight_decay: 0.01
@@ -66,6 +66,11 @@ models:
   # --- Open-source models: fine-tuned with LoRA, inference via logit pass ---
   llama_8b:
     base_model: meta-llama/Llama-3.1-8B-Instruct
+    family: llama
+    type: open
+
+  llama_8b_base:
+    base_model: meta-llama/Meta-Llama-3.1-8B-Reference
     family: llama
     type: open
 
