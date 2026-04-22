@@ -133,6 +133,11 @@ rcts:
   rct_04:
     outcome: "TBD"
     treatments: ["TBD"]
+  duch_2023:
+    outcome: "Have you received a COVID-19 vaccine, as verified in the records of the Ghanaian District Health Offices?"
+    treatments: ["CDC Health", "Placebo", "Low Cash", "High Cash"]
+    data_file: data/human/rcts/duch_2023/duch_2023_data.csv
+    prompt_file: data/prompts/rcts/duch_2023.json
 
 
 # ===========================================================================

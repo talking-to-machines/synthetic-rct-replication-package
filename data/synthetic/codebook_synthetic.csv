@@ -7,11 +7,14 @@ logit_yes,float,Raw logit for the Yes token,Unbounded,NA for API models
 logit_no,float,Raw logit for the No token,Unbounded,NA for API models
 prob_yes,float,Renormalised probability: p(yes) / (p(yes) + p(no)),0.0--1.0,none expected
 date,date,Date inference was run,YYYY-MM-DD,none expected
+rct_id,string,RCT identifier for this inference run,Matches keys in config.yaml rcts: block,none expected
 model_family,string,Model family,"llama, qwen, gpt5",none expected
 model_version,string,Official release version,"e.g. 3.1, 3, 5",none expected
 model_size,string,Parameter count,"e.g. 8B, 70B",NA for API models
 model_id,string,Full model identifier,HuggingFace ID or API model string,none expected
 fine_tuned,boolean,Whether LoRA fine-tuning was applied,"TRUE, FALSE",none expected
+ft_base_model,string,Base pretrain model the fine-tune started from,HuggingFace/Together AI model ID,NA if fine_tuned=FALSE
+ft_corpus,string,Training corpus used for fine-tuning,"e.g. alpaca, duch_2023_train",NA if fine_tuned=FALSE
 lora_r,integer,LoRA rank,e.g. 32,NA if fine_tuned=FALSE
 lora_alpha,integer,LoRA alpha,e.g. 64,NA if fine_tuned=FALSE
 lora_dropout,float,LoRA dropout rate,e.g. 0.05,NA if fine_tuned=FALSE

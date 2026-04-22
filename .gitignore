@@ -3,3 +3,4 @@
 .env
 synthetic_rcts_file_tree.md
 archive/
+__pycache__/

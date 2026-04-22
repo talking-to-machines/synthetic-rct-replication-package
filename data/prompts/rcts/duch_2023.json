@@ -1,0 +1,35 @@
+{
+  "study": "duch_2023",
+  "id_column": "ID",
+  "treatment_column": "treatment",
+  "demographic_questions": [
+    "Start Date",
+    "What is your current age?",
+    "What is your gender?",
+    "What is the highest educational qualification you have completed?",
+    "Which region do you live in?",
+    "Which distric do you live in?",
+    "What is the name of the community you live in?",
+    "How many people live in your village?",
+    "What is the distance in km of the nearest health clinic from where you live?",
+    "How many people live in the house together with you (NOT including you) at this moment?",
+    "How many children below 18 years old are currently living in your home?",
+    "What is your current working situation?",
+    "How much (in Ghanaian Cedis) on average does your household spend in a typical week on food?",
+    "How much (in Ghanaian Cedis) on average does your household spend in a typical week on non-food items (electricity, water, rent, school fees)?",
+    "How would you rate the overall economic or financial condition of your household today?",
+    "Do you have a registered mobile number?",
+    "How many family members do you have in another village?",
+    "How many friends and acquaintances who are not part of your family do you have in another village?",
+    "How many individuals can you identify in your social network? Think of friends and relatives that live close to you",
+    "How often do you use social media?"
+  ],
+  "system_template": "You participate in a healthcare survey in Ghana and have the following profile:\n{profile}\n\nDuring the survey, you received the following information:\n{treatment}\n\nYou were told you would be contacted in six weeks to verify your vaccination status. Six weeks have now passed.",
+  "user_template": "Have you received a COVID-19 vaccine, as verified in the records of the Ghanaian District Health Offices? Give your response in the following format: [Yes/No]",
+  "treatment_transcripts": {
+    "CDC Health": "Health authorities are working hard to distribute the COVID-19 vaccines free for everyone with no strings attached. COVID 19 vaccines are safe and effective. After you have been fully vaccinated you can resume activities that you did prior to the pandemic. Getting the COVID-19 vaccine will help prevent you from getting COVID-19 and reduce your risk of being hospitalized with COVID-19. COVID 19 vaccine help you to protect yourself your environment and your loved ones from COVID-19 exposure.\nWe indicated that we will follow up with you in six weeks. We will contact you in order to verify your vaccination status. If you can provide us with your COVID-19 vaccination carnet at the time, we will upload a copy of the vaccination carnet to our secure server for verification.",
+    "Placebo": "The Sun lights up our lives for business for education even for socializing but when the Sun sets many people use candles who are quality battery-operated torches and kerosene lamps as inefficient and expensive ways to create light. What if you can take some Sun with you at night?  You can with portable solar products there are different types, but each portable solar product is made up of three basic parts: a small solar panel, a modern rechargeable battery and an LED bulb. The solar panel catches the light from the Sun and stores this energy in the battery. This can now be used for much needed light when it's dark. Many can even charge phones portable solar products should be reliable affordable and warranted be sure to demand top quality solar products look for these products lighting Africa shining the way.\nWe indicated that we will follow up with you in six weeks. We will contact you in order to verify your vaccination status. If you can provide us with your COVID-19 vaccination carnet at the time, we will upload a copy of the vaccination carnet to our secure server for verification.",
+    "Low Cash": "Health authorities are working hard to distribute the COVID-19 vaccines free for everyone with no strings attached. COVID-19 vaccines are safe and effective. After you have been fully vaccinated you can resume activities that you did prior to the pandemic. If you have at least one COVID-19 vaccine shot you will receive 20 Cedi. If you get vaccinated, you will get rewarded.\nWe indicated that we will follow up with you in six weeks. We will contact you in order to verify your vaccination status. If you can provide us with your COVID-19 vaccination carnet at the time, we will upload a copy of the vaccination carnet to our secure server for verification and you will be paid your 20 Cedi via cell phone money payment or by cash if you prefer.",
+    "High Cash": "Health authorities are working hard to distribute the COVID-19 vaccines free for everyone with no strings attached. COVID-19 vaccines are safe and effective. After you have been fully vaccinated you can resume activities that you did prior to the pandemic. If you have at least one COVID-19 vaccine shot you will receive 60 Cedi. If you get vaccinated, you will get rewarded.\nWe indicated that we will follow up with you in six weeks. We will contact you in order to verify your vaccination status. If you can provide us with your COVID-19 vaccination carnet at the time, we will upload a copy of the vaccination carnet to our secure server for verification and you will be paid your 60 Cedi via cell phone money payment or by cash if you prefer."
+  }
+}

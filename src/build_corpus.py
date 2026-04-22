@@ -6,6 +6,7 @@ Writes: data/finetuning/train.jsonl
 Extracted from the archived notebook `prepare_fine_tuning_data.ipynb`.
 """
 
+import json
 import os
 
 import pandas as pd
@@ -24,20 +25,36 @@ set_seed(RANDOM_STATE)
 def build_duch_2023_corpus(
     source_csv: str,
     output_dir: str,
-    demographic_questions: list,
+    prompt_file: str,
     target_outcome: str,
 ) -> str:
-    """Construct the JSONL fine-tuning corpus for the Duch et al. 2023 RCT."""
+    """Construct the JSONL fine-tuning corpus for the Duch et al. 2023 RCT.
+
+    Reads demographic_questions, system_template, user_template, and
+    treatment_transcripts from `prompt_file` (RCT prompt JSON).
+    """
+    with open(prompt_file) as f:
+        prompt_cfg = json.load(f)
+    demographic_questions = prompt_cfg["demographic_questions"]
+    system_template = prompt_cfg["system_template"]
+    user_template = prompt_cfg["user_template"]
+    treatment_transcripts = prompt_cfg["treatment_transcripts"]
+    treatment_col = prompt_cfg.get("treatment_column", "treatment")
+
     data = pd.read_csv(source_csv, header=1)
     data[target_outcome] = data[target_outcome].replace("NA", None)
 
-    training = data[demographic_questions + [target_outcome, "treatment"]].copy()
+    training = data[demographic_questions + [target_outcome, treatment_col]].copy()
     training["demographic_prompt"] = training.apply(
-        generate_demographic_prompt, axis=1, args=([target_outcome, "treatment"],)
+        generate_demographic_prompt, axis=1, args=([target_outcome, treatment_col],)
     )
-    training["system_prompt"] = training.apply(format_duch_2023_system_prompt, axis=1)
+    training["system_prompt"] = training.apply(
+        format_duch_2023_system_prompt,
+        axis=1,
+        args=(system_template, treatment_transcripts),
+    )
     training["text"] = training.apply(
-        format_duch_2023_user_prompt, axis=1, args=(target_outcome,)
+        format_duch_2023_user_prompt, axis=1, args=(user_template, target_outcome)
     )
     training = training.sample(frac=1, random_state=RANDOM_STATE).reset_index(drop=True)
 

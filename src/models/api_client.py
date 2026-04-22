@@ -152,14 +152,13 @@ def batch_query(
 
 
 def inference_endpoint_query(
-    endpoint_url: str,
     prompts: pd.DataFrame,
     system_message_field: str,
     user_message_field: str,
     experiment_round: str,
     experiment_version: str,
     model_name: str,
-    together_model_id: str = "iamraymondlow/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo-c6090e90",
+    together_model_id: str,
 ) -> pd.DataFrame:
     """
     Query a dedicated inference endpoint (Together AI) and return the responses.
@@ -167,7 +166,6 @@ def inference_endpoint_query(
     Saves per-row progress to resume interrupted runs.
 
     Parameters:
-        endpoint_url (str): The endpoint URL (unused for Together, kept for API symmetry).
         prompts (pd.DataFrame): The DataFrame containing prompts.
         system_message_field (str): The column name indicating the system message.
         user_message_field (str): The column name indicating the user message.
@@ -220,12 +218,28 @@ def inference_endpoint_query(
 
         logprobs_obj = response.choices[0].logprobs
         if logprobs_obj:
-            top_logprobs_data.append(
-                {
-                    "token": logprobs_obj.tokens[0],
-                    "logprob": logprobs_obj.token_logprobs[0],
-                }
-            )
+            top_lp = getattr(logprobs_obj, "top_logprobs", None)
+            if top_lp:
+                first_pos = top_lp[0]
+                if isinstance(first_pos, dict):
+                    for token, logprob in first_pos.items():
+                        top_logprobs_data.append({"token": token, "logprob": logprob})
+                elif isinstance(first_pos, list):
+                    for item in first_pos:
+                        if isinstance(item, dict):
+                            top_logprobs_data.append(
+                                {
+                                    "token": item.get("token"),
+                                    "logprob": item.get("logprob"),
+                                }
+                            )
+            else:
+                tokens = getattr(logprobs_obj, "tokens", None) or []
+                token_logprobs = getattr(logprobs_obj, "token_logprobs", None) or []
+                if tokens and token_logprobs:
+                    top_logprobs_data.append(
+                        {"token": tokens[0], "logprob": token_logprobs[0]}
+                    )
 
         result = json.dumps(
             {
