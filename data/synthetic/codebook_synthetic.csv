@@ -35,6 +35,5 @@ train_seed,integer,Random seed used for this training run,e.g. 42,NA if fine_tun
 infer_precision,string,Inference precision,e.g. bf16,NA for API models
 infer_batch_size,integer,Inference batch size,e.g. 32,NA for API models
 infer_max_seq_length,integer,Max sequence length during inference,e.g. 2048,NA for API models
-infer_temperature,float,Temperature (API models),e.g. 0.0,NA for open models
-infer_seed,integer,Inference seed (API models),e.g. 42,NA for open models
-infer_max_tokens,integer,Max tokens (API models),e.g. 5,NA for open models
+infer_temperature,float,Sampling temperature used at inference,e.g. 1.0,none expected
+infer_max_tokens,integer,Max tokens generated per query,e.g. 1,none expected

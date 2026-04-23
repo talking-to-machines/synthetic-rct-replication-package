@@ -142,87 +142,6 @@ def run_gpt_inference(request: dict) -> pd.DataFrame:
     return data_with_responses
 
 
-def run_togetherai_inference(request: dict) -> pd.DataFrame:
-    """Run inference for open models (Llama/Qwen) via Together AI dedicated endpoints.
-
-    Expects `request` with keys: prompt_file, question, data_file_path,
-    experiment_round, version, api_url, model_name (backend, e.g.
-    "together_logit"), model, scenario, and fine-tuning metadata
-    (finetuning_approach, epochs, checkpoints, evaluations, batch_size,
-    lora_rank, lora_alpha, lora_dropout, lora_trainable_models,
-    train_on_inputs, learning_rate, learning_rate_scheduler, warmup_ratio,
-    max_gradient_norm, weight_decay).
-    """
-    data = load_data(request["data_file_path"], drop_first_row=True)
-
-    with open(request["prompt_file"]) as f:
-        prompt_cfg = json.load(f)
-
-    if prompt_cfg["study"] not in ["duch_2023"]:
-        raise ValueError(f"Study {prompt_cfg['study']} is not supported.")
-
-    prompts = generate_synthetic_experiment_prompts(
-        data,
-        prompt_cfg["demographic_questions"],
-        prompt_cfg["system_template"],
-        prompt_cfg["user_template"],
-        prompt_cfg["treatment_transcripts"],
-        id_column=prompt_cfg.get("id_column", "ID"),
-        treatment_column=prompt_cfg.get("treatment_column", "treatment"),
-    )
-
-    prompts_with_responses = inference_endpoint_query(
-        endpoint_url=request["api_url"],
-        prompts=prompts,
-        system_message_field="system_message",
-        user_message_field="question_prompt",
-        experiment_round=request["experiment_round"],
-        experiment_version=request["version"],
-        model_name=request["model_name"],
-    )
-
-    id_col = prompt_cfg.get("id_column", "ID")
-    data_with_responses = pd.merge(
-        data, prompts_with_responses, on=id_col, suffixes=("", "_y")
-    )
-    data_with_responses["user_response"] = data_with_responses[request["question"]]
-
-    logit_columns = data_with_responses["llm_response"].apply(_parse_logit_response)
-    data_with_responses = pd.concat([data_with_responses, logit_columns], axis=1)
-
-    for key in (
-        "model",
-        "scenario",
-        "finetuning_approach",
-        "epochs",
-        "checkpoints",
-        "evaluations",
-        "batch_size",
-        "lora_rank",
-        "lora_alpha",
-        "lora_dropout",
-        "lora_trainable_models",
-        "train_on_inputs",
-        "learning_rate",
-        "learning_rate_scheduler",
-        "warmup_ratio",
-        "max_gradient_norm",
-        "weight_decay",
-    ):
-        data_with_responses[key] = request.get(key)
-
-    data_with_responses = include_variable_names(
-        data_with_responses, request["data_file_path"]
-    )
-
-    output_path = os.path.join(
-        "data/synthetic", f"{request['experiment_round']}_{request['version']}.xlsx"
-    )
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    data_with_responses.to_excel(output_path, index=False)
-    return data_with_responses
-
-
 def _model_family_version_size(model_cfg: dict, model_key: str) -> tuple:
     """Derive (model_family, model_version, model_size) for the codebook columns."""
     family = model_cfg.get("family", "")
@@ -326,6 +245,9 @@ def run_togetherai_inference_codebook(
         experiment_version=experiment_version,
         model_name="together_logit",
         together_model_id=model_id,
+        temperature=inference.get("temperature", 1.0),
+        max_tokens=inference.get("max_tokens", 1),
+        logprobs_top_k=inference.get("logprobs_top_k", 5),
     )
 
     data[id_col] = data[id_col].astype(str)
@@ -399,9 +321,8 @@ def run_togetherai_inference_codebook(
             "infer_precision": inference.get("precision"),
             "infer_batch_size": inference.get("batch_size"),
             "infer_max_seq_length": inference.get("max_seq_length"),
-            "infer_temperature": None,
-            "infer_seed": None,
-            "infer_max_tokens": None,
+            "infer_temperature": inference.get("temperature"),
+            "infer_max_tokens": inference.get("max_tokens"),
         }
     )
 

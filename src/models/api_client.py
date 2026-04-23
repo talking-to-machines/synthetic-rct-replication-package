@@ -159,6 +159,9 @@ def inference_endpoint_query(
     experiment_version: str,
     model_name: str,
     together_model_id: str,
+    temperature: float = 1.0,
+    max_tokens: int = 1,
+    logprobs_top_k: int = 5,
 ) -> pd.DataFrame:
     """
     Query a dedicated inference endpoint (Together AI) and return the responses.
@@ -173,6 +176,10 @@ def inference_endpoint_query(
         experiment_version (str): The experiment/model version.
         model_name (str): The name of the LLM backend ("together_logit").
         together_model_id (str): Together AI model id to query.
+        temperature: Sampling temperature passed to Together's chat API.
+        max_tokens: Maximum tokens generated per query.
+        logprobs_top_k: `logprobs` value passed to Together; top-k logprobs
+            returned at each generated token position.
 
     Returns:
         pd.DataFrame: The prompts with the corresponding LLM responses.
@@ -207,10 +214,9 @@ def inference_endpoint_query(
             model=together_model_id,
             messages=messages,
             stream=False,
-            max_tokens=1,
-            logprobs=True,
-            top_logprobs=5,
-            temperature=1.0,
+            max_tokens=max_tokens,
+            logprobs=logprobs_top_k,
+            temperature=temperature,
         )
 
         actual_response = response.choices[0].message.content
