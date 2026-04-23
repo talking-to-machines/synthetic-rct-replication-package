@@ -84,7 +84,7 @@ def run_gpt_inference(request: dict) -> pd.DataFrame:
     with open(request["prompt_file"]) as f:
         prompt_cfg = json.load(f)
 
-    if prompt_cfg["study"] not in ["duch_2023"]:
+    if prompt_cfg["study"] not in ["duch_et_al_2023"]:
         raise ValueError(f"Study {prompt_cfg['study']} is not supported.")
 
     prompts = generate_synthetic_experiment_prompts(
@@ -97,7 +97,7 @@ def run_gpt_inference(request: dict) -> pd.DataFrame:
         treatment_column=prompt_cfg.get("treatment_column", "treatment"),
     )
 
-    is_logit = prompt_cfg["study"] == "duch_2023"
+    is_logit = prompt_cfg["study"] == "duch_et_al_2023"
     batch_file_dir = create_batch_file(
         prompts,
         system_message_field="system_message",
@@ -185,7 +185,7 @@ def run_togetherai_inference_codebook(
 
     Args:
         config_path: Path to config.yaml.
-        rct_id: Key under `rcts:` in config.yaml (e.g. "duch_2023").
+        rct_id: Key under `rcts:` in config.yaml (e.g. "duch_et_al_2023").
         model_key: Key under `models:` in config.yaml (e.g. "llama_8b_base").
         model_id: Together AI model identifier to query (e.g. the fine-tuned
             model name returned by the fine-tuning job).

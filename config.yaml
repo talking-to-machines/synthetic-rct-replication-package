@@ -119,7 +119,7 @@ conditions: [instruct, finetuned]
 
 
 # ===========================================================================
-# Data sources
+# Human Data sources
 # ===========================================================================
 
 # RCTs (fine-tuning via training splits, evaluation via test splits).
@@ -127,20 +127,28 @@ rcts:
   rct_01:
     outcome: "TBD"
     treatments: ["TBD"]
+    data_file:
+    prompt_file:
   rct_02:
     outcome: "TBD"
     treatments: ["TBD"]
+    data_file:
+    prompt_file:
   rct_03:
     outcome: "TBD"
     treatments: ["TBD"]
+    data_file:
+    prompt_file:
   rct_04:
     outcome: "TBD"
     treatments: ["TBD"]
-  duch_2023:
-    outcome: "Have you received a COVID-19 vaccine, as verified in the records of the Ghanaian District Health Offices?"
+    data_file:
+    prompt_file:
+  duch_et_al_2023:
+    outcome: "ActVacApril"
     treatments: ["CDC Health", "Placebo", "Low Cash", "High Cash"]
-    data_file: data/human/rcts/duch_2023/duch_2023_data.csv
-    prompt_file: data/prompts/rcts/duch_2023.json
+    data_file: data/human/rcts/duch_et_al_2023/duch_et_al_2023_data.csv
+    prompt_file: data/prompts/rcts/duch_et_al_2023_prompt.json
 
 
 # ===========================================================================
