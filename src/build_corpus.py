@@ -12,9 +12,9 @@ import os
 import pandas as pd
 
 from src.data.formatting import (
-    format_duch_2023_system_prompt,
-    format_duch_2023_user_prompt,
-    generate_demographic_prompt,
+    format_system_prompt,
+    format_user_prompt,
+    generate_profile_prompt,
 )
 from src.utils.io import save_jsonl
 from src.utils.seed import RANDOM_STATE, set_seed
@@ -22,39 +22,39 @@ from src.utils.seed import RANDOM_STATE, set_seed
 set_seed(RANDOM_STATE)
 
 
-def build_duch_2023_corpus(
+def build_rct_corpus(
     source_csv: str,
     output_dir: str,
     prompt_file: str,
     target_outcome: str,
 ) -> str:
-    """Construct the JSONL fine-tuning corpus for the Duch et al. 2023 RCT.
+    """Construct the JSONL fine-tuning corpus for an RCT.
 
-    Reads demographic_questions, system_template, user_template, and
-    treatment_transcripts from `prompt_file` (RCT prompt JSON).
+    Reads profile_vars, system_template, user_template, and
+    treatment (transcripts dict) from `prompt_file` (RCT prompt JSON).
     """
     with open(prompt_file) as f:
         prompt_cfg = json.load(f)
-    demographic_questions = prompt_cfg["demographic_questions"]
+    profile_vars = prompt_cfg["profile_vars"]
     system_template = prompt_cfg["system_template"]
     user_template = prompt_cfg["user_template"]
-    treatment_transcripts = prompt_cfg["treatment_transcripts"]
+    treatment_transcripts = prompt_cfg["treatment"]
     treatment_col = prompt_cfg.get("treatment_column", "treatment")
 
     data = pd.read_csv(source_csv, header=1)
     data[target_outcome] = data[target_outcome].replace("NA", None)
 
-    training = data[demographic_questions + [target_outcome, treatment_col]].copy()
-    training["demographic_prompt"] = training.apply(
-        generate_demographic_prompt, axis=1, args=([target_outcome, treatment_col],)
+    training = data[profile_vars + [target_outcome, treatment_col]].copy()
+    training["profile_prompt"] = training.apply(
+        generate_profile_prompt, axis=1, args=([target_outcome, treatment_col],)
     )
     training["system_prompt"] = training.apply(
-        format_duch_2023_system_prompt,
+        format_system_prompt,
         axis=1,
         args=(system_template, treatment_transcripts),
     )
     training["text"] = training.apply(
-        format_duch_2023_user_prompt, axis=1, args=(user_template, target_outcome)
+        format_user_prompt, axis=1, args=(user_template, target_outcome)
     )
     training = training.sample(frac=1, random_state=RANDOM_STATE).reset_index(drop=True)
 

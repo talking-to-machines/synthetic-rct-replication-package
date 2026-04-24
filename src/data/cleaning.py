@@ -1,31 +1,36 @@
 import pandas as pd
 
 
-def load_data(filepath: str, drop_first_row: bool = False) -> pd.DataFrame:
-    """
-    Load the survey data (in either CSV format or Excel format) from a filepath.
+def load_data(filepath: str) -> tuple[pd.DataFrame, dict]:
+    """Load an RCT data file with a two-row header.
+
+    Convention:
+        Row 0: short variable codes (used as DataFrame column names).
+        Row 1: long-form survey questions/labels.
+        Row 2+: subject responses.
+
+    Short codes match `profile_vars`/`outcome` in config.yaml and the prompt
+    JSON; the long-form labels are returned alongside so that downstream
+    prompt generation can substitute the human-readable question text into
+    the rendered system message.
 
     Parameters:
-        filepath (str): The path to the survey data file.
-        drop_first_row (bool): Whether to drop the first row and use the second row as column headers.
+        filepath: Path to a `.csv` or `.xlsx` file following the convention above.
 
     Returns:
-        pd.DataFrame: The survey data.
+        data: DataFrame with short-code columns and only data rows.
+        var_labels: Mapping from short code -> long-form label.
     """
     if filepath.endswith(".csv"):
-        if drop_first_row:
-            df = pd.read_csv(filepath, header=1)
-        else:
-            df = pd.read_csv(filepath)
+        raw = pd.read_csv(filepath, header=0)
     elif filepath.endswith(".xlsx"):
-        if drop_first_row:
-            df = pd.read_excel(filepath, header=1)
-        else:
-            df = pd.read_excel(filepath)
+        raw = pd.read_excel(filepath, header=0)
     else:
         raise ValueError("Unsupported file format. Please provide a CSV or XLSX file.")
 
-    return df
+    var_labels = raw.iloc[0].to_dict()
+    data = raw.iloc[1:].reset_index(drop=True)
+    return data, var_labels
 
 
 def include_variable_names(

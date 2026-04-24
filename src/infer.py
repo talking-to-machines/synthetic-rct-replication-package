@@ -21,7 +21,7 @@ import pandas as pd
 import yaml
 from openai import OpenAI
 
-from src.data.cleaning import load_data, include_variable_names
+from src.data.cleaning import load_data
 from src.data.formatting import generate_synthetic_experiment_prompts
 from src.models.api_client import (
     batch_query,
@@ -32,16 +32,44 @@ from src.utils.config import OPENAI_API_KEY
 
 
 def _parse_logit_response(json_str: str) -> pd.Series:
-    """Parse Yes/No logit distribution from a JSON string of logprobs."""
+    """Parse Yes/No logits from a JSON string of per-position logprobs.
+
+    Strategy: scan the sampled-token sequence for the first "Yes" or "No"
+    (case-insensitive). If found, use that position's top-k to extract
+    Yes/No logprobs. If neither appears anywhere in the sequence, fall back
+    to position 0 (first token).
+    """
     try:
         parsed = json.loads(json_str)
-        actual_response = parsed.get("response", "")
-        top_logprobs = parsed.get("top_logprobs", [])
+        per_position = parsed.get("per_position_logprobs", [])
+
+        if not per_position:
+            return pd.Series(
+                {
+                    "llm_response_parsed": parsed.get("response", ""),
+                    "logprob_yes": None,
+                    "logprob_no": None,
+                    "prob_yes": None,
+                    "prob_no": None,
+                }
+            )
+
+        chosen_idx = None
+        for i, pos in enumerate(per_position):
+            tok = (pos.get("sampled_token") or "").strip().lower()
+            if tok in ("yes", "no"):
+                chosen_idx = i
+                break
+        if chosen_idx is None:
+            chosen_idx = 0
+
+        chosen = per_position[chosen_idx]
+        chosen_token = chosen.get("sampled_token") or ""
 
         yes_probs = []
         no_probs = []
-        for entry in top_logprobs:
-            token = entry["token"].strip().lower()
+        for entry in chosen.get("top_logprobs", []):
+            token = (entry.get("token") or "").strip().lower()
             if token == "yes":
                 yes_probs.append(math.exp(entry["logprob"]))
             elif token == "no":
@@ -52,7 +80,7 @@ def _parse_logit_response(json_str: str) -> pd.Series:
 
         return pd.Series(
             {
-                "llm_response_parsed": actual_response,
+                "llm_response_parsed": chosen_token,
                 "logprob_yes": math.log(prob_yes) if prob_yes is not None else None,
                 "logprob_no": math.log(prob_no) if prob_no is not None else None,
                 "prob_yes": prob_yes,
@@ -79,7 +107,7 @@ def run_gpt_inference(request: dict) -> pd.DataFrame:
     """
     client = OpenAI(api_key=OPENAI_API_KEY)
 
-    data = load_data(request["data_file_path"], drop_first_row=True)
+    data, var_labels = load_data(request["data_file_path"])
 
     with open(request["prompt_file"]) as f:
         prompt_cfg = json.load(f)
@@ -89,12 +117,13 @@ def run_gpt_inference(request: dict) -> pd.DataFrame:
 
     prompts = generate_synthetic_experiment_prompts(
         data,
-        prompt_cfg["demographic_questions"],
+        prompt_cfg["profile_vars"],
         prompt_cfg["system_template"],
         prompt_cfg["user_template"],
-        prompt_cfg["treatment_transcripts"],
-        id_column=prompt_cfg.get("id_column", "ID"),
-        treatment_column=prompt_cfg.get("treatment_column", "treatment"),
+        prompt_cfg["treatment"],
+        id_column="SubjectID",
+        treatment_column="individual_treatment",
+        var_labels=var_labels,
     )
 
     is_logit = prompt_cfg["study"] == "duch_et_al_2023"
@@ -115,7 +144,7 @@ def run_gpt_inference(request: dict) -> pd.DataFrame:
     )
     llm_responses.rename(columns={"query_response": "llm_response"}, inplace=True)
 
-    id_col = prompt_cfg.get("id_column", "ID")
+    id_col = "SubjectID"
     prompts_with_responses = pd.merge(prompts, llm_responses, on="custom_id")
     data_with_responses = pd.merge(
         data, prompts_with_responses, on=id_col, suffixes=("", "_y")
@@ -129,10 +158,6 @@ def run_gpt_inference(request: dict) -> pd.DataFrame:
 
     data_with_responses["model"] = request["model"]
     data_with_responses["scenario"] = request["scenario"]
-
-    data_with_responses = include_variable_names(
-        data_with_responses, request["data_file_path"]
-    )
 
     output_path = os.path.join(
         "data/synthetic", f"{request['experiment_round']}_{request['version']}.xlsx"
@@ -189,14 +214,16 @@ def run_togetherai_inference_codebook(
         model_key: Key under `models:` in config.yaml (e.g. "llama_8b_base").
         model_id: Together AI model identifier to query (e.g. the fine-tuned
             model name returned by the fine-tuning job).
-        condition: "instruct" or "finetuned". Controls which metadata fields
-            are populated in the output.
+        condition: "instruct", "finetuned", or "instruction_tuned".
+            For "instruction_tuned", the per-dataset training/lora overrides
+            under config.yaml `instruction_tuning.datasets.{ft_corpus}` are
+            layered on top of the resolved training/lora config.
         data_file_path: Override for the RCT data CSV. Defaults to the
             `data_file` entry under the RCT config.
         output_csv: Override for the output CSV path.
         ft_corpus: Label for the training corpus used to produce `model_id`
-            (e.g. "alpaca"). Populates the codebook's `ft_corpus` column when
-            `condition="finetuned"`.
+            (e.g. "alpaca"). Populates the codebook's `ft_corpus` column.
+            Required when condition="instruction_tuned".
     """
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
@@ -216,27 +243,47 @@ def run_togetherai_inference_codebook(
     lora = {**cfg["lora"], **model_cfg.get("lora", {})}
     inference = {**cfg.get("inference", {}), **model_cfg.get("inference", {})}
 
+    # For instruction_tuned runs, layer the per-dataset training/lora
+    # overrides from config.yaml's instruction_tuning.datasets block on top.
+    if condition == "instruction_tuned":
+        if not ft_corpus:
+            raise ValueError(
+                "condition='instruction_tuned' requires --ft-corpus to identify "
+                "which instruction_tuning dataset produced the model."
+            )
+        datasets = cfg.get("instruction_tuning", {}).get("datasets", {})
+        if ft_corpus not in datasets:
+            raise KeyError(
+                f"ft_corpus {ft_corpus!r} not in config.yaml "
+                f"instruction_tuning.datasets. Known: {sorted(datasets)}"
+            )
+        dataset_cfg = datasets[ft_corpus]
+        training = {**training, **dataset_cfg.get("training", {})}
+        lora = {**lora, **dataset_cfg.get("lora", {})}
+
     with open(rct_cfg["prompt_file"]) as f:
         prompt_cfg = json.load(f)
 
     data_path = data_file_path or rct_cfg["data_file"]
-    data = load_data(data_path, drop_first_row=True)
+    data, var_labels = load_data(data_path)
 
-    id_col = prompt_cfg.get("id_column", "ID")
-    treatment_col = prompt_cfg.get("treatment_column", "treatment")
+    id_col = "SubjectID"
+    treatment_col = "individual_treatment"
 
     prompts = generate_synthetic_experiment_prompts(
         data,
-        prompt_cfg["demographic_questions"],
+        prompt_cfg["profile_vars"],
         prompt_cfg["system_template"],
         prompt_cfg["user_template"],
-        prompt_cfg["treatment_transcripts"],
+        prompt_cfg["treatment"],
         id_column=id_col,
         treatment_column=treatment_col,
+        var_labels=var_labels,
     )
 
     experiment_round = rct_id
-    experiment_version = f"{model_key}_{condition}"
+    version_suffix = f"_{ft_corpus}" if ft_corpus and condition != "instruct" else ""
+    experiment_version = f"{model_key}_{condition}{version_suffix}"
     prompts_with_responses = inference_endpoint_query(
         prompts=prompts,
         system_message_field="system_message",
@@ -259,7 +306,7 @@ def run_togetherai_inference_codebook(
 
     outcome_col = rct_cfg["outcome"]
     family, version, size = _model_family_version_size(model_cfg, model_key)
-    is_finetuned = condition == "finetuned"
+    is_finetuned = condition in ("finetuned", "instruction_tuned")
     target_modules = ",".join(lora.get("target_modules", [])) if is_finetuned else None
     effective_bs = (
         training["batch_size"] * training.get("gradient_accumulation_steps", 1)
@@ -307,7 +354,7 @@ def run_togetherai_inference_codebook(
                 training.get("warmup_ratio") if is_finetuned else None
             ),
             "train_max_grad_norm": (
-                training.get("max_grad_norm", 1.0) if is_finetuned else None
+                training.get("max_grad_norm") if is_finetuned else None
             ),
             "train_weight_decay": (
                 training.get("weight_decay") if is_finetuned else None
@@ -318,15 +365,27 @@ def run_togetherai_inference_codebook(
                 training.get("max_seq_length") if is_finetuned else None
             ),
             "train_seed": seed,
+            "train_n_checkpoints": (
+                training.get("n_checkpoints") if is_finetuned else None
+            ),
+            "train_n_evals": training.get("n_evals") if is_finetuned else None,
+            "train_on_inputs": (
+                training.get("train_on_inputs") if is_finetuned else None
+            ),
             "infer_precision": inference.get("precision"),
             "infer_batch_size": inference.get("batch_size"),
             "infer_max_seq_length": inference.get("max_seq_length"),
             "infer_temperature": inference.get("temperature"),
             "infer_max_tokens": inference.get("max_tokens"),
+            "infer_logprobs_top_k": inference.get("logprobs_top_k"),
+            "infer_target_tokens": ",".join(inference.get("target_tokens", [])) or None,
         }
     )
 
-    output_path = output_csv or f"data/synthetic/{rct_id}_{model_key}_{condition}.csv"
+    output_path = (
+        output_csv
+        or f"data/synthetic/{rct_id}_{model_key}_{condition}{version_suffix}.csv"
+    )
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     out.to_csv(output_path, index=False)
     print(f"Wrote {len(out)} rows to {output_path}")
@@ -344,14 +403,21 @@ def main() -> None:
         help="Together AI model identifier (e.g. fine-tuned model name).",
     )
     parser.add_argument(
-        "--condition", default="finetuned", choices=["instruct", "finetuned"]
+        "--condition",
+        default="finetuned",
+        choices=["instruct", "finetuned", "instruction_tuned"],
     )
     parser.add_argument("--data-file", default=None)
     parser.add_argument("--output-csv", default=None)
     parser.add_argument(
         "--ft-corpus",
         default=None,
-        help="Training corpus label (e.g. 'alpaca'). Populates ft_corpus column when condition=finetuned.",
+        help=(
+            "Training corpus label. For condition=instruction_tuned, must be a key "
+            "under config.yaml instruction_tuning.datasets (e.g. 'alpaca', "
+            "'alpagasus') -- its training/lora overrides are applied on top of "
+            "the model's config. Populates the ft_corpus output column."
+        ),
     )
     args = parser.parse_args()
 

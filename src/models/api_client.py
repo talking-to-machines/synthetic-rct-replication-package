@@ -194,9 +194,9 @@ def inference_endpoint_query(
 
     if os.path.exists(progress_file):
         processed_prompts = pd.read_csv(progress_file)
-        processed_prompts["ID"] = processed_prompts["ID"].astype("int64")
+        processed_prompts["SubjectID"] = processed_prompts["SubjectID"].astype("int64")
         prompts = prompts.merge(
-            processed_prompts[["ID", "llm_response"]], on="ID", how="left"
+            processed_prompts[["SubjectID", "llm_response"]], on="SubjectID", how="left"
         )
     else:
         prompts["llm_response"] = None
@@ -210,47 +210,67 @@ def inference_endpoint_query(
             {"role": "user", "content": row[user_message_field]},
         ]
 
-        response = client.chat.completions.create(
-            model=together_model_id,
-            messages=messages,
-            stream=False,
-            max_tokens=max_tokens,
-            logprobs=logprobs_top_k,
-            temperature=temperature,
-        )
+        create_kwargs = {
+            "model": together_model_id,
+            "messages": messages,
+            "stream": False,
+            "logprobs": logprobs_top_k,
+            "temperature": temperature,
+        }
+        if max_tokens is not None:
+            create_kwargs["max_tokens"] = max_tokens
+        response = client.chat.completions.create(**create_kwargs)
 
         actual_response = response.choices[0].message.content
-        top_logprobs_data = []
 
+        # Together's chat API with logprobs=k returns, for each generated
+        # position, the sampled token (tokens[i]/token_logprobs[i]) plus the
+        # top-k most-likely alternatives (top_logprobs[i]). Store per-position
+        # so the parser can scan the sequence for Yes/No.
+        per_position_logprobs = []
         logprobs_obj = response.choices[0].logprobs
         if logprobs_obj:
-            top_lp = getattr(logprobs_obj, "top_logprobs", None)
-            if top_lp:
-                first_pos = top_lp[0]
-                if isinstance(first_pos, dict):
-                    for token, logprob in first_pos.items():
-                        top_logprobs_data.append({"token": token, "logprob": logprob})
-                elif isinstance(first_pos, list):
-                    for item in first_pos:
-                        if isinstance(item, dict):
-                            top_logprobs_data.append(
-                                {
-                                    "token": item.get("token"),
-                                    "logprob": item.get("logprob"),
-                                }
-                            )
-            else:
-                tokens = getattr(logprobs_obj, "tokens", None) or []
-                token_logprobs = getattr(logprobs_obj, "token_logprobs", None) or []
-                if tokens and token_logprobs:
-                    top_logprobs_data.append(
-                        {"token": tokens[0], "logprob": token_logprobs[0]}
-                    )
+            tokens = getattr(logprobs_obj, "tokens", None) or []
+            token_logprobs = getattr(logprobs_obj, "token_logprobs", None) or []
+            top_lp = getattr(logprobs_obj, "top_logprobs", None) or []
+
+            for i, sampled_token in enumerate(tokens):
+                sampled_logprob = token_logprobs[i] if i < len(token_logprobs) else None
+                entries = []
+                seen_tokens = set()
+
+                def _add(tok, lp):
+                    if tok is None or lp is None:
+                        return
+                    key = tok.strip().lower()
+                    if key in seen_tokens:
+                        return
+                    seen_tokens.add(key)
+                    entries.append({"token": tok, "logprob": lp})
+
+                _add(sampled_token, sampled_logprob)
+                if i < len(top_lp):
+                    first_pos = top_lp[i]
+                    if isinstance(first_pos, dict):
+                        for tok, lp in first_pos.items():
+                            _add(tok, lp)
+                    elif isinstance(first_pos, list):
+                        for item in first_pos:
+                            if isinstance(item, dict):
+                                _add(item.get("token"), item.get("logprob"))
+
+                per_position_logprobs.append(
+                    {
+                        "sampled_token": sampled_token,
+                        "sampled_logprob": sampled_logprob,
+                        "top_logprobs": entries,
+                    }
+                )
 
         result = json.dumps(
             {
                 "response": actual_response,
-                "top_logprobs": top_logprobs_data,
+                "per_position_logprobs": per_position_logprobs,
             }
         )
 

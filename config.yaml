@@ -25,7 +25,11 @@ training:
   optimizer: adamw_torch
   precision: bf16
   max_seq_length: 2048
+  max_grad_norm: 1.0
   seeds: [42, 43, 44]
+  n_checkpoints: 1
+  n_evals: 0
+  train_on_inputs: auto
 
 
 # ---------------------------------------------------------------------------
@@ -48,7 +52,7 @@ inference:
   batch_size: 32
   max_seq_length: 2048
   temperature: 1.0
-  max_tokens: 1
+  max_tokens: 512                    # Together AI's default for chat completions
   logprobs_top_k: 5
 
 
@@ -113,9 +117,50 @@ models:
 
 # ===========================================================================
 # Experimental conditions
-# Open models are evaluated in both conditions; API models in `instruct` only.
+# `instruct` = off-the-shelf instruct variant, no tuning.
+# `finetuned` = LoRA fine-tune on RCT training splits.
+# `instruction_tuned` = LoRA fine-tune on a general instruction dataset
+#   (alpaca / alpagasus) -- see instruction_tuning: block below.
+# Open models are evaluated in all three conditions; API models in `instruct` only.
 # ===========================================================================
-conditions: [instruct, finetuned]
+conditions: [instruct, finetuned, instruction_tuned]
+
+
+# ===========================================================================
+# Instruction-tuning datasets
+# Feed a base pretrain model -> instruction-following variant.
+# Each dataset may override top-level `training` and `lora` blocks.
+# ===========================================================================
+instruction_tuning:
+  system_prompt: "You are a helpful assistant that follows instructions."
+  datasets:
+    alpaca:
+      data_file: data/human/alpaca/alpaca_data.json
+      output_jsonl: data/finetuning/alpaca/alpaca_train.jsonl
+      training:
+        epochs: 3
+        batch_size: 8
+        gradient_accumulation_steps: 1
+        learning_rate: 2.0e-5
+        weight_decay: 0.0
+        max_seq_length: 512
+      lora:
+        r: 16
+        alpha: 32
+    alpagasus:
+      data_file: data/human/alpagasus/alpagasus_data.json
+      output_jsonl: data/finetuning/alpagasus/alpagasus_train.jsonl
+      training:
+        epochs: 3
+        batch_size: 8
+        gradient_accumulation_steps: 1
+        learning_rate: 2.0e-5
+        weight_decay: 0.0
+        lr_scheduler: linear
+        max_seq_length: 512
+      lora:
+        r: 16
+        alpha: 32
 
 
 # ===========================================================================
