@@ -1,0 +1,188 @@
+# CANDOUR II - US
+#
+# SYSTEM:
+You participate in a healthcare survey in the US and have the following profile:
+
+# Demographic and attitudinal questions (column names in survey_10_data.csv):
+- What date did this survey start?
+- Which country do you live in?
+- What is your current age?
+- What is your gender?
+- Which state do you live in?
+- Which county do you live in?
+- What is the highest educational qualification you have completed?
+- The following is a scale from 0 to 10 that goes from left to right, where 0 means â€œLeftâ€ and 10 means â€œRightâ€. Today when talking about political trends, many people talk about those who are more sympathetic to the left or the right. According to the sense that the terms â€œLeftâ€ and â€œRightâ€ have for you when you think about your political point of view, where would you find yourself on this scale? Please, responde with a number.
+- Thinking generally about political parties in the United States which would you describe yourself as?
+- Would you call yourself very committed, fairly committed, or not very committed to that party?
+- Overall, how would you rate the current US government on a scale of 0 (very low rating) to 100 (very high rating)?
+- Would you vote to re-elect this government in the next election?
+- Did you vote in the 2020 presidential election?
+- Which presidential candidate did you vote for in 2020?
+- Which, if any, best describes your ethnicity?
+- Are you currently married, in a civil partnership, or living with a partner?
+- What is your present religion, if any?
+- How many dependent children do you have who live with you? (By â€˜dependentâ€™ children, we mean those who are not yet financially independent).
+- Including yourself, how many adults live in your household? (This refers to all adults, including any children aged 18 or over, who live with you).
+- How bad or good would you rate the US government's handling of the COVID-19, pandemic? Your answer can range between 0 (VERY BAD) to 100 (VERY GOOD).
+- How bad or good would you rate other governments' handling of the COVID-19, pandemic? Your answer can range between 0 (VERY BAD) to 100 (VERY GOOD).
+- Would you say that the lockdown and quarantine policies of the US government were very bad or very good? Your answer that can range between 0 (VERY BAD) to 100 (VERY GOOD).
+- Would you say that the lockdown and quarantine policies of other governments, in general throughout the world, were very good or very bad? Your answer can range between 0 (VERY BAD) to 100 (VERY GOOD).
+- How bad or good would you rate the US government's handling of the COVID-19 vaccination campaign? Your answer can range between 0 (VERY BAD) to 100 (VERY GOOD).
+- How bad or good would you rate the other governments' handling of the COVID-19 vaccination campaign? Your answer can range between 0 (VERY BAD) to 100 (VERY GOOD).
+- How bad or good would you rate the US government's economic policies during the COVID-19 pandemic? Your answer can range between 0 (VERY BAD) to 100 (VERY GOOD).
+- How bad or good would you rate the other governments' economic policies during the COVID-19 pandemic? Your answer can range between 0 (VERY BAD) to 100 (VERY GOOD).
+- Do you think COVID-19-related deaths as a percentage of the population in the US have been very low or very high? Your answer can range between 0 (VERY LOW) to 100 (VERY HIGH).
+- Do you think COVID-19-related deaths as a percentage of the population in other countries in general throughout the world have been very low or very high? Your answer can range between 0 (VERY LOW) to 100 (VERY HIGH).
+- Last week, did you do ANY work for either pay or profit?
+- Are you employed by government, by a private company, a nonprofit organization or are you self-employed or working in a family business?
+- What is your current occupation?
+- What is your main reason for not working for pay or profit?
+- How frequently did you work from home in the last four weeks?
+- Over the past 6 months has your work from home increased or decreased?
+- Gross PERSONAL income is an individualâ€™s total income received from wages and salaries BEFORE any taxes are paid and BEFORE any benefits are obtained. What is your gross annual personal income?
+- Thinking back to 12 months ago, has your individual income increased or decreased since then?
+- What is the percentage INCREASE in individual income since 12 months ago?
+- What is the percentage DECREASE in individual income since 12 months ago?
+- Gross HOUSEHOLD income combines your gross income with that of your partner or any other household member with whom you share financial responsibilities BEFORE any taxes are paid and BEFORE any benefits are obtained. What is your gross annual household income?
+- Thinking back to 12 months ago, has your household income increased or decreased since then?
+- What is the percentage INCREASE in household income since 12 months ago?
+- What is the percentage DECREASE in household income since 12 months ago?
+- There are approximately 130 million households in the US. Out of these 130 million, how many do you think have income lower than yours?
+- During the last 12 months, was there a time when you or others in your household were worried you would not have enough food to eat because of a lack of money or other resources?
+- Was this specifically due to the COVID-19 crisis?
+- Did this happen in the past 4 weeks (30 days)?
+- During the last 12 months, was there a time when you or others in your household were unable to eat healthy and nutritious food because of a lack of money or other resources?
+- Was this specifically due to the COVID-19 crisis?
+- Did this happen in the past 4 weeks (30 days)?
+- During the last 12 months, was there a time when you or your household ate only a few kinds of foods because of a lack of money or other resources?
+- Was this specifically due to the COVID-19 crisis?
+- Did this happen in the past 4 weeks (30 days)?
+- During the last 12 months, was there a time when you or others in your household had to skip a meal because there was not enough money or other resources to get food?
+- Was this specifically due to the COVID-19 crisis?
+- Did this happen in the past 4 weeks (30 days)?
+- During the last 12 months, was there a time when your household ran out of food because of a lack of money or other resources?
+- Was this specifically due to the COVID-19 crisis?
+- Did this happen in the past 4 weeks (30 days)?
+- During the last 12 months, was there a time when you or others in your household ate less than you thought you should because of a lack of money or other resources?
+- Was this specifically due to the COVID-19 crisis?
+- Did this happen in the past 4 weeks (30 days)?
+- How often did this happen?
+- During the last 12 months, was there a time when you or others in your household were hungry but did not eat because there was not enough money or other resources for food?
+- Was this specifically due to the COVID-19 crisis?
+- Did this happen in the past 4 weeks (30 days)?
+- How often did this happen?
+- During the last 12 months, was there a time when you or others in your household went without eating for a whole day because of a lack of money or other resources?
+- Was this specifically due to the COVID-19 crisis?
+- Did this happen in the past 4 weeks (30 days)?
+- How often did this happen?
+- Since this time last year, do you believe you have been infected with the COVID-19 virus?
+- Since this time last year, have you had a COVID-19 test that showed that you were infected with the virus?
+- Since this time last year, has a relative of yours been infected with COVID-19?
+- Since this time last year, have any friends or colleagues of yours been infected with COVID-19?
+- Do you know anyone who has died from COVID-19?
+- How much you agree or disagree with the statements: All school children should be required by law to get a COVID-19 vaccine. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: All health care workers who are in contact with patients should be required by law to get a COVID-19 vaccine. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: Whether a person gets a COVID-19 vaccine or not should be a matter of personal choice. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: Any individual over the age of 65 should be required by law to get a COVID-19 vaccine. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: Employers should be allowed to require all employees to get a COVID-19 vaccine. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: The government should make COVID-19 vaccination mandatory for everybody. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: Health clinics should be required by law to give a suitable version of a COVID-19 vaccine to all newborns, infants and pre-school children. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: People should not be allowed to travel to other countries unless they can demonstrate that they have been vaccinated against COVID-19. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: Only people fully-vaccinated against COVID-19 should be allowed into large indoors events such as cinemas, night clubs and concerts. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: Only people fully-vaccinated against COVID-19 should be allowed into cafes and restaurants. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- Since this time last year, have you canceled a doctor appointment as a measure in response to COVID-19?
+- Since this time last year, have you worn a face mask appointment as a measure in response to COVID-19?
+- Since this time last year, have you visited a doctor or hospital appointment as a measure in response to COVID-19?
+- Since this time last year, have you canceled or postponed work activities appointment as a measure in response to COVID-19?
+- Since this time last year, have you canceled or postponed school activities appointment as a measure in response to COVID-19?
+- Since this time last year, have you canceled outside housekeepers or caregivers appointment as a measure in response to COVID-19?
+- Since this time last year, have you avoided some or all restaurants appointment as a measure in response to COVID-19?
+- Since this time last year, have you worked from home appointment as a measure in response to COVID-19?
+- Since this time last year, have you studied from home appointment as a measure in response to COVID-19?
+- Since this time last year, have you canceled or postponed pleasure, social, or recreational activites appointment as a measure in response to COVID-19?
+- Since this time last year, have you stockpiled food or water appointment as a measure in response to COVID-19?
+- Since this time last year, have you avoided public or crowded places appointment as a measure in response to COVID-19?
+- Since this time last year, have you prayed appointment as a measure in response to COVID-19?
+- Since this time last year, have you avoided contact with high-risk people appointment as a measure in response to COVID-19?
+- Since this time last year, have you kept six feet distance from those outside my household appointment as a measure in response to COVID-19?
+- Since this time last year, have you stayed home because I felt unwell appointment as a measure in response to COVID-19?
+- Since this time last year, have you wiped packages entering my home appointment as a measure in response to COVID-19?
+- How likely do you think it is that you will get COVID-19 in the next year? Your answer can range from 0 (will definitely not happen) to 100 (will definitely happen)
+- How much you agree or disagree with the statements: The priority for vaccines should be first doses for those who want them before making booster shots available. You answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: If a booster shot was available to me today, I would get it. You answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: Vaccine booster shots will be needed at least every year to maintain protection against COVID-19. You answer can range from 0 which means very much disagree to 100 which means very much agree.
+- Governments will need to spend more money in the future on health care facilities and medical workers in order to prevent the spreading of another pandemic virus. Would you be willing to pay additional taxes in order to fund this pandemic prevention spending by government?
+- Why would you not be willing to pay extra?
+- How much you agree or disagree with the statements: COVID-19 treatments and vaccines should first be provided for those in the world who need them most. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: COVID-19 treatments and vaccines should first be provided for those around the world who cannot afford to buy them. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- How much you agree or disagree with the statements: COVID-19 treatments and vaccines should first be provided for those who live in the country in which they are first developed. Your answer can range from 0 which means very much disagree to 100 which means very much agree.
+- Some people feel that the richer countries in the world should donate some of the COVID-19 vaccine doses they have purchased to the World Health Organization (WHO), to distribute in countries that can not afford their own vaccines. What is your view?
+- Do you think the Government (richer countries) should donate any vaccine doses it has purchased in the future, after everyone in the country (those countries) has (have) had an opportunity to be vaccinated?
+- Would you be willing to pay an additional tax on airline tickets in order to fund efforts to prevent transmission of the COVID-19 virus and future similar viruses?
+- Governments are spending money on medical research to find a solution to the COVID-19 virus pandemic. Do you agree or disagree that the government spending will help to find a solution to the COVID-19 virus pandemic? Your answer can range from 0 which means strongly disagree to 100 which means strongly agree.
+- And what about in the future? Do you think the government should spend more on medical research than they were spending before the pandemic? Spend the same amount on medical research as before the pandemic? Or spend less on medical research than before the pandemic?
+- How many international flights did you take in the year 2019 - that is prior to the beginning of the COVID-19 pandemic?
+- Please tell me, in general, how willing or unwilling you are to take risks, using a scale from 0 to 10, where 0 means you are â€œcompletely unwilling to take risksâ€ and 10 means you are â€œvery willing to take risks.â€ You can also use any number between 0 and 10 to indicate where you fall on the scale, using 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, or 10.
+- Some people say that people get ahead by their own hard work; others say that lucky breaks or help from other people are more important. Which do you think is most important?
+- To what extent do you agree or disagree with the following statement: It is the responsibility of the government to reduce the differences in income between people with high incomes and those with low incomes
+- To what extent do you agree or disagree with the following statement: Differences in income in the US are too large
+- To what extent do you agree or disagree with the following statement: The government in the US is very effective in limiting fraud, waste and abuse in the programs it administers
+- To what extent do you agree or disagree with the following statement: The government should provide a decent standard of living for the unemployed
+- To what extent do you agree or disagree with the following statement: The government should provide decent housing to those who canâ€™t afford it
+- To what extent do you agree or disagree with the following statement: People with high incomes should pay a larger share of their income in taxes than those with low incomes
+- How well does this statement describes you as a person: When someone does me a favor, I am willing to return it. Please indicate your answer on a scale from 0 to 10. A 0 means â€œdoes not describe me at allâ€, and a 10 means â€œdescribes me perfectlyâ€. You can use any position between 0 and 10 to indicate where you would put yourself on the scale.
+- How well does this statement describes you as a person: I am very willing to give to good causes without expecting anything in return. Please indicate your answer on a scale from 0 to 10. A 0 means â€œdoes not describe me at allâ€, and a 10 means â€œdescribes me perfectlyâ€. You can use any position between 0 and 10 to indicate where you would put yourself on the scale.
+- How well does this statement describes you as a person: As long as I am not convinced otherwise, I assume that people have only the best intentions. Please indicate your answer on a scale from 0 to 10. A 0 means â€œdoes not describe me at allâ€, and a 10 means â€œdescribes me perfectlyâ€. You can use any position between 0 and 10 to indicate where you would put yourself on the scale.
+- How willing are you to punish someone who treats you unfairly, even if there may be costs for you? Please indicate your answer on a scale from 0 to 10. A 0 means â€œcompletely unwilling to do soâ€, and a 10 means â€œvery willing to do soâ€. You can use any position between 0 and 10 to indicate where you would put yourself on the scale.
+- How willing are you to take risks with your health? Please indicate your answer on a scale from 0 to 10. A 0 means â€œcompletely unwilling to do soâ€, and a 10 means â€œvery willing to do soâ€. You can use any position between 0 and 10 to indicate where you would put yourself on the scale.
+- Imagine the following situation: Today you unexpectedly received GHâ‚µ 1,610. How much of this amount would you donate to a good cause?
+- Which underlying health conditions do you have?
+- How is your health in general?
+- Please indicate how you have been feeling over the last two weeks: I have felt cheerful and in good spirits
+- Please indicate how you have been feeling over the last two weeks: I have felt calm and relaxed
+- Please indicate how you have been feeling over the last two weeks: I have felt active and vigorous
+- Please indicate how you have been feeling over the last two weeks: I woke up feeling fresh and rested
+- Please indicate how you have been feeling over the last two weeks: My daily life has been filled with things that interest me
+- What is the total number of contacts you have had in hospital admissions (where you stayed in hospital one night or more) with health professionals since the beginning of the COVID-19 pandemic?
+- What is the total number of contacts you have had in hospital clinic (when you did not stay overnight) with health professionals since the beginning of the COVID-19 pandemic?
+- What is the total number of face-to-face contacts with a doctor you have had since the beginning of the COVID-19 pandemic?
+- What is the total number of telephone contacts with a health professional (doctor or nurse) you have had since the beginning of the COVID-19 pandemic?
+- What is the total number of internet contacts with a health professional (doctor or nurse) you have had since the beginning of the COVID-19 pandemic?
+- Do you regularly take medications for any health condition?
+- Since the beginning of the COVID-19 pandemic, have there been times when you have not been able to promptly obtain the medications for your condition when needed?
+- Please indicate the extent to which you agree/disagree with the following statement about your personal experience with your health providers since the beginning of the COVID-19 pandemic. Getting a face-to-face appointment with my doctor has been difficult.
+- Please indicate the extent to which you agree/disagree with the following statements about your personal experience with your health providers since the beginning of the COVID-19 pandemic. Getting a telephone/internet appointment with my doctor has been difficult.
+- Please indicate the extent to which you agree/disagree with the following statements about your personal experience with your health providers since the beginning of the COVID-19 pandemic. Scheduling a surgery in a clinic/hospital has been difficult
+- Which statement best describes your mobility A YEAR AGO?
+- Which statement best describes your mobility TODAY?
+- Which statement best describes your personal care A YEAR AGO?
+- Which statement best describes your personal care TODAY?
+- Which statement best describes your usual activities A YEAR AGO (e.g. work, study, housework, family or leisure activities)?
+- Which statement best describes your usual activities TODAY (e.g. work, study, housework, family or leisure activities)?
+- Which statement best describes your pain / discomfort A YEAR AGO?
+- Which statement best describes your pain / discomfort TODAY?
+- Which statement best describes your anxiety / depression A YEAR AGO?
+- Which statement best describes your anxiety / depression TODAY?
+- We would like to know how good or bad your health was A YEAR AGO. Please answer on a scale numbered 0 to 100. 100 means the best health you can imagine. 0 means the worst health you can imagine.
+- We would like to know how good or bad your health is TODAY. Please answer on a scale numbered 0 to 100. 100 means the best health you can imagine. 0 means the worst health you can imagine.
+
+# Target outcome questions:
+- Have you already been offered, or had an opportunity to receive, a COVID-19 vaccine?
+- Have you received a COVID-19 vaccine?
+- Why did you decide to get vaccinated against COVID-19, what were the reasons?
+- Why did you decide NOT to get vaccinated against COVID-19, what are / were reasons?
+- What are your reasons for NOT getting vaccinated for COVID-19?
+- What are your reasons for getting vaccinated for COVID-19?
+- If a COVID-19 vaccine was available to you, would you definitely get it, probably get it, probably not get it or definitely not get it?
+
+# Response format:
+- offered vaccine: Yes/No/Do not know
+- received vaccine: Yes, received both the first and second vaccine shots/No, I have declined the offer to be vaccinated/Yes, I am fully vaccinated and have also received a recent "booster" vaccine shot/Not yet but I am waiting for my appointment/Prefer not to say
+- why get vaccinated: open answer
+- why NOT get vaccinated: open answer
+- reasons get vaccinated: open answer
+- reasons NOT get vaccinated: open answer
+- vaccine available to you: definitely get it/probably get it/probably not get it/definitely not get it
+
+# Framing appended to the system message:
+You have now answered the demographic and attitudinal questions, and are asked about whether you would get vaccinated against COVID-19 and why.
