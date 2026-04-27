@@ -1,0 +1,81 @@
+# Galasso et al. 2023 -- Vaccine Hesitancy (US and Sweden)
+#
+# Survey context:
+You participate in a healthcare survey in the US about the COVID-19 vaccine conducted in December 2020 and have the following profile:
+
+# Demographic questions (column names in rct_12_data.csv):
+- What was your country of residence at the beginning of December 2020?
+- Are you a male or a female?
+- What is your level of education?
+- Do you live alone, with your family, or with other people who are not your family?
+- What is your political affiliation? Choose one of the following options: liberal, centrist, conservative, or I don't know.
+- Do you trust scientists?
+- Do you generally trust others?
+- How often do you watch news on TV?
+- How often do you listen to news on the radio?
+- How often do you read newspapers?
+- How often do you read news on social media?
+- How often do you read news on the internet?
+- On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that nobody is responsible for the outbreak of the virus?
+- On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that other people responsible for the outbreak of the virus?
+- On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that China is responsible for the outbreak of the virus?
+- How often do you experience low interest or pleasure in general?
+- How often do you feel down or low in mood?
+- On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that you will get infected if you resume the usual daily activities?
+- On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that you will get seriously ill if you get infected?
+- Do you think Covid-19 pandemic is having serious consequences on health in your country?
+- On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that the virus was created by 'big pharma companies' primarily to generate profit?
+- On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that the vaccine is the solution?
+- Have you received all mandatory vaccinations?
+- How old are you?
+- What is your occupation?
+- Have you ever had covid?
+- Has anyone in your household had covid?
+- Has anyone in your family had covid?
+- Has any of your friends had covid?
+- On a scale from 0 to 100 - where 0 means 'not at all compliant' and 100 'fully compliant' - how compliant do you think others are with restrictions?
+- On a scale from 0 to 10 - where 0 means 'not at all risk-averse' and 10 means 'very risk-averse' - How risk-averse are you?
+- Do you agree with the decision to close schools?
+- On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is the European Union is responsible for the outbreak of the virus?
+- After 6 months: Do you trust scientists?
+- After 6 months: Do you generally trust others?
+- After 6 months: On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that China is responsible for the outbreak of the virus?
+- After 6 months: How often do you experience low interest or pleasure in general?
+- After 6 months: How often do you feel down or low in mood?
+- After 6 months: On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that you will get infected if you resume the usual daily activities?
+- After 6 months: On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that you will get seriously ill if you get infected?
+- After 6 months: Do you think Covid-19 pandemic is having serious consequences on health in your country?
+- After 6 months: On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that the virus was created by 'big pharma companies' primarily to generate profit?
+- After 6 months: On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that the vaccine is the solution?
+- After 6 months: Due to the expedition of clinical trials for the Covid-19 vaccines, the possible side effects of the vaccine are unknown. On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that the vaccine has side effects?
+- After 6 months: On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that strictly complying with social distancing and other health measures reduces the risk of being infected?
+- After 6 months: Have you ever had covid?
+- After 6 months: Has anyone in your household had covid?
+- After 6 months: Has anyone in your family had covid?
+- After 6 months: Has any of your friends had covid?
+- After 6 months: On a scale from 0 to 100 - where 0 means 'not at all compliant' and 100 'fully compliant' - how compliant do you think others are with restrictions
+- After 6 months: On a scale from 0 to 10 - where 0 means 'not at all risk-averse' and 10 means 'very risk-averse' - How risk-averse are you?
+- After 6 months: Do you live alone, with your family, or with other people who are not your family?
+- After 6 months: What is your political affiliation? Choose one of the following options: liberal, centrist, conservative, or I don't know.
+
+# Target outcome questions:
+- Assuming the vaccine becomes available, on a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely are you to get vaccinated?
+- Did you get vaccinated against COVID-19 by July 2021?
+- After 6 months: Have you received all mandatory vaccinations?
+- After 6 months: Assuming the vaccine becomes available, on a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely are you to get vaccinated?
+
+# Response format:
+- vaccination intention: 0/10
+- vaccination status July 2021: Yes/No
+- mandatory vaccinations: Yes/No
+- vaccination intention 6 months: 0/10
+
+# Treatment arms:
+- Control
+- Self-protection
+- Protecting others
+- Health risk
+- Economic protection
+
+# Post-treatment framing appended to the system message:
+You have just read the message corresponding to your treatment arm and were asked about your vaccination intention. Six months have now passed, and you are now answering follow-up questions about your actual vaccination behavior and updated views. 

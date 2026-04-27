@@ -1,0 +1,146 @@
+# Steinert et al. 2022 -- Vaccine hesitancy (Sweden)
+#
+# Survey context:
+You participate in a healthcare survey in Sweden about the COVID-19 vaccine conducted from 15 to 24 June 2021 and have the following profile:
+
+# Demographic questions (column names in rct_08_data.csv):
+- What is your gender?
+- What is your age?
+- What is your highest educational attainment?
+- In which region do you live?
+- Are you currently employed?
+- Is a curfew in place in your country?
+- What is the level of trust in the government in your country?
+- What is the level of health literacy in your country?
+- What is the level of misinformation exposure in your country?
+- Do you work in essential services (e.g. as a cashier, pharmacist, nurse, doctor, etc.)?
+- Do you practice a profession in one of the following areas: Culture, gastronomy, entertainment, retail?
+- Are you living in a long-term relationship (including marriage)?
+- How many people live permanently in your household, including yourself?
+- Please indicate how many children aged below 18 live in your household (i.e., sleep in your household an average of at least 5 nights per week)
+- If you take all the incomes together: what is the current montly household income of all household members?
+- Do you identify with a religious group?
+- Have you already been vaccinated against COVID-19?
+- How many people died from COVID-19 in the AstraZeneca group?
+- How many people died from COVID-19 in the BioNTec group?
+- Which aspects of public health can be restored once everyone is vaccinated against COVID-19? Going to the cinema
+- Which aspects of public health can be restored once everyone is vaccinated against COVID-19? Grocery shopping
+- Which aspects of public health can be restored once everyone is vaccinated against COVID-19? Seeing a doctor
+- Which aspects of public health can be restored once everyone is vaccinated against COVID-19? Going to a restaurant
+- Which aspects of public health can be restored once everyone is vaccinated against COVID-19? Travelling abroad
+- Which activity will only be allowed for people who can show a valid vaccination passport? Travelling without quarantine
+- Which activity will only be allowed for people who can show a valid vaccination passport? Travelling everywhere
+- Which activity will only be allowed for people who can show a valid vaccination passport? Travelling within your country
+- Which activity will only be allowed for people who can show a valid vaccination passport? Travelling in the EU
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: I am confident that the vaccination against COVID-19 is safe and has been sufficiently tested.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: I am concerned regarding the safety of COVID-19 vaccines because of the speed with which they have been developed and produced.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: The side effects that are associated with vaccination against COVID-19 are downplayed by health authorities on purpose.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: I am confident that the Moderna vaccine is safe and has been sufficiently tested.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: I am confident that the Astra Zeneca vaccine is safe and has been sufficiently tested.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: I am confident that the Johnson & Johnson vaccine is safe and has been sufficiently tested.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: I am confident that the BioNTech/Pfizer vaccine is safe and has been sufficiently tested.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: I am concerned regarding the safety of the Moderna because of the speed with which they have been developed and produced.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: I am concerned regarding the safety of the Astra Zeneca because of the speed with which they have been developed and produced.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: I am concerned regarding the safety of the Johnson & Johnson because of the speed with which they have been developed and produced.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: I am concerned regarding the safety of the BioNTech/Pfizer because of the speed with which they have been developed and produced.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: The side effects that are associated with the Moderna is downplayed by health authorities on purpose.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: The side effects that are associated with the Astra Zeneca is downplayed by health authorities on purpose.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: The side effects that are associated with the Johnson & Johnson is downplayed by health authorities on purpose.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: The side effects that are associated with the BioNTech/Pfizer is downplayed by health authorities on purpose.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: When everyone is getting vaccinated against COVID-19, it is not essential for myself to get vaccinated.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: Vaccination against COVID-19 helps primarily to overcome the disadvantages that I am experiencing due to the pandemic, e.g., social distancing and lockdown.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: If I get vaccinated against COVID-19, I can also protect people around me from an infection with the virus.
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please indicate your agreement/disagreement to the following statement: If all risk groups are vaccinated against COVID-19, it no longer matters whether I also get vaccinated or not.
+- It is something of a mystery how vaccines work to protect us from viral diseases like COVID-19 Please read the following idea as to how vaccines work. We would like you to rank it from 1 to 4, where 1 is closest to your understanding about how vaccines work and 4 is the most distant from your understanding about how vaccines work: 'Our bodies are in a war against hostile viruses forces like COVID-19. Vaccines strengthen our armed forces to fight and defeat viruses.'
+- It is something of a mystery how vaccines work to protect us from viral diseases like COVID-19 Please read the following idea as to how vaccines work. We would like you to rank it from 1 to 4, where 1 is closest to your understanding about how vaccines work and 4 is the most distant from your understanding about how vaccines work: 'Vaccines are like secret service agents, they tell the body where the enemy is going to attack so the body is ready, prepared, and able to stop them before they cause harm.'
+- It is something of a mystery how vaccines work to protect us from viral diseases like COVID-19 Please read the following idea as to how vaccines work. We would like you to rank it from 1 to 4, where 1 is closest to your understanding about how vaccines work and 4 is the most distant from your understanding about how vaccines work: 'Vaccines are like a bullet proof vest protecting the body from the viruses and most of the damage that they could do to the body.'
+- It is something of a mystery how vaccines work to protect us from viral diseases like COVID-19 Please read the following idea as to how vaccines work. We would like you to rank it from 1 to 4, where 1 is closest to your understanding about how vaccines work and 4 is the most distant from your understanding about how vaccines work: 'Vaccines are like herbicides for killing weeds, they prevent the virus from taking root in the body.'
+- There have been several variants (types) of the COVID-19 virus. How effective do you think the following strategy would be against these new variants? To develop a new COVID-19 vaccine every year and offer everyone an annual injection.
+- There have been several variants (types) of the COVID-19 virus. How effective do you think the following strategy would be against these new variants? To ensure that COVID-19 vaccines are available in every corner of the world.	
+- There have been several variants (types) of the COVID-19 virus. How effective do you think the following strategy would be against these new variants? To strengthen health systems in the developing countries.
+- There have been several variants (types) of the COVID-19 virus. How effective do you think the following strategy would be against these new variants? To have tight regulations for travellers from affected countries coming to Europe.
+- Why is it suggested that people get vaccinated every year against the COVID-19 variants? Because the COVID-19 vaccine only lasts for about 12 months.
+- Why is it suggested that people get vaccinated every year against the COVID-19 variants? Because more effective vaccines will be available in the near future.
+- Why is it suggested that people get vaccinated every year against the COVID-19 variants? Because the COVID-19 virus might mutate every year and new protective vaccines are needed.
+- Why is it suggested that people get vaccinated every year against the COVID-19 variants? It makes a lot of money for the pharmaceutical companies.
+- In your opinion how believable is the following account about the origin of COVID-19? 'The COVID-19 virus is just one of those accidents that happen in nature.'
+- In your opinion how believable is the following account about the origin of COVID-19? 'The COVID-19 virus escaped from a laboratory studying genetics.'
+- In your opinion how believable is the following account about the origin of COVID-19? 'The COVID-19 virus was caused by people eating wild animals' meat.'
+- In your opinion how believable is the following account about the origin of COVID-19? 'The COVID-19 virus is due to humans' destruction of the natural world.'
+- In your opinion how believable is the following account about the origin of COVID-19? 'The COVID-19 virus is the result of people not following the path of God.'
+- In response to the COVID-19 pandemic governments faced the trade-off between saving human life and saving the national economy. On a scale from 1 to 7, where 1 means 'saving human lives at the cost of the economy' and 7 means 'saving the economy at the cost of loss of human life', which one would you say?
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please evaluate how much you disagree or agree with the following statement: 'I am completely confident that vaccines are safe.'
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please evaluate how much you disagree or agree with the following statement: 'Vaccination is unnecessary because vaccine-preventable diseases are not common anymore.'
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please evaluate how much you disagree or agree with the following statement: 'Everyday stress prevents me from getting vaccinated.'
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please evaluate how much you disagree or agree with the following statement: 'When I think about getting vaccinated, I weigh benefits and risks to make the best decision possible.'
+- On a scale from 1 ('Strongly disagree') to 7 ('Strongly agree'), please evaluate how much you disagree or agree with the following statement: 'When everyone is vaccinated, I don't have to get vaccinated, too.'
+- Are you vaccinated against measles?
+- Are you vaccinated against flu (vaccination within the last three years)?
+- Are you vaccinated against pneumococci?
+- Are you vaccinated against hepatitis A?
+- Are you vaccinated against hepatitis B?
+- Are you vaccinated against tetanus?
+- Are you vaccinated against diphtheria?
+- On a scale from 1 to 5, where 1 means 'something I never think about' and 5 means 'something I think about all the time', how did you perceive the Coronavirus situation?
+- On a scale from 1 to 5, where 1 means 'not frightening' and 5 means 'frightening', how did you perceive the Coronavirus situation?
+- On a scale from 1 to 5, where 1 means 'not worrisome' and 5 means 'worrisome', how did you perceive the Coronavirus situation?
+- Are you currently or have you in the past been infected with the coronavirus?
+- Please think about how the Corona pandemic has affected people in your social network - your friends, colleagues, relatives and other people you know. Which statements apply to your social network? 'There are or have been untested suspected cases of the coronavirus.'
+- Please think about how the Corona pandemic has affected people in your social network - your friends, colleagues, relatives and other people you know. Which statements apply to your social network? 'There are or have been confirmed cases of people infected with the coronavirus.'
+- Please think about how the Corona pandemic has affected people in your social network - your friends, colleagues, relatives and other people you know. Which statements apply to your social network? 'There are or have been individuals who have recovered from a coronavirus infection.'
+- Please think about how the Corona pandemic has affected people in your social network - your friends, colleagues, relatives and other people you know. Which statements apply to your social network? 'There are or have been individuals who have died as a result of a coronavirus infection.'
+- Please think about how the Corona pandemic has affected people in your social network - your friends, colleagues, relatives and other people you know. Which statements apply to your social network? 'None of the above.'
+- What do you think: how many out of 100 people in your environment will get vaccinated against COVID-19?
+- Do you think most of your family members want you to get vaccinated against COVID-19?
+- Do you think most of your close friends want you to get vaccinated against COVID-19?
+- Do you think your employer wants you to get vaccinated against COVID-19?
+- How well informed do you feel about the COVID-19 vaccination?
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I don't like situations that are uncertain.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I dislike questions which could be answered in many different ways.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I find that a well-ordered life with regular hours suits my temperament.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I feel uncomfortable when I don't understand the reason why an event occurred in my life.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I feel irritated when one person disagrees with what everyone else in a group believes.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I don't like to go into a situation without knowing what I can expect from it.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'When I have made a decision, I feel relieved.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'When I am confronted with a problem, I'm dying to reach a solution very quickly.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I would quickly become impatient and irritated if I would not find a solution to a problem immediately.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I don't like to be with people who are capable of unexpected actions.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I dislike it when a person's statement could mean many different things.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I find that establishing a consistent routine enables me to enjoy life more.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I enjoy having a clear and structured mode of life.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I do not usually consult many different opinions before forming my own view.'
+- On a scale from 1 to 6, where 1 means 'completely disagree' and 6 means 'completely agree', how much do you agree with the following statement? 'I dislike unpredictable situations.'
+- A bat and a ball cost #c_0068# 1.10 in total. The bat costs a bit more than the ball. How much does the ball cost?
+- If it takes 5 machines 5 minutes to make 5 widgets, how long would it take 100 machines to make 100 widgets?
+- In a lake, there is a patch of lily pads. Every day, the patch doubles in size. If it takes 48 days for the patch to cover the entire lake, how long would it take for the patch to cover half of the lake?
+- If John can drink one barrel of water in 6 days, and Mary can drink one barrel of water in 12 days, how long would it take them to drink one barrel of water together?
+- Jerry received both the 15th highest and the 15th lowest mark in the class. How many students are in the class?
+- A man buys a pig for EURO 60, sells it for EURO 70, buys it back for EURO 80, and sells it finally for EURO 90. How much has he made?
+- Simon decided to invest EURO 8,000 in the stock market one day early in 2008. Six months after he invested, on July 17, the stocks he had purchased were down 50%. Fortunately for Simon, from July 17 to October 17, the stocks he had purchased went up 75%. At this point, Simon has:
+
+# Target outcome questions:
+- How would you decide if you had the opportunity to get vaccinated against COVID-19 next week?
+- If you have certainly decided to get vaccinated next week, will the vaccine be Moderna?
+- If you have certainly decided to get vaccinated next week, will the vaccine be Astra Zeneca?
+- If you have certainly decided to get vaccinated next week, will the vaccine be Johnson&Johnson?
+- If you have certainly decided to get vaccinated next week, will the vaccine be BioNTech/Pfizer
+- Please name reasons for which you are undecided.
+- Please name reasons why you wouldn't get vaccinated under any circumstances.
+
+# Response format:
+- opportunity vaccination: I would certainly get vaccinated, regardless of which of the three vaccine types I am offered/I am unsure whether I would get vaccinated/Whether I would get vaccinated depends on the vaccine type I am offered/I would not get vaccinated under any circumstances, regardless of which of the three vaccine types was offered
+- Moderna vaccine: Yes/No
+- Astra Zeneca vaccine: Yes/No
+- Johnson&Johnson vaccine: Yes/No
+- BioNTech/Pfizer vaccine: Yes/No
+- Why undecided: open answer
+- Why not: open answer
+
+# Treatment arms:
+- Control
+- Risk reduction
+- Hedonistic benefits
+- Vaccination certificate
+
+# Post-treatment framing appended to the system message:
+You have just read a message encouraging you to get a COVID-19 vaccine and are now asked about whether and which COVID-19 vaccine you intend to take next week.

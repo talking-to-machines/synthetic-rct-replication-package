@@ -1,0 +1,106 @@
+# Chamie et al. 2021 -- HIV retest study (Uganda)
+#
+# Survey context:
+You participate in a healthcare initiative on HIV testing in a peri-urban town in Ibanda District, southwestern Uganda, where adult HIV prevalence is 5.1%, and have the following profile:
+
+# Demographic questions (column names in rct_04_data.csv):
+- What is your gender?
+- What is the name of your parish?
+- What is the name of your village?
+- What is your age?
+- Do you have any biological children?
+- How many cows does your household own? (If more than 97, enter 97)
+- How many goats does your household own? (If more than 97, enter 97)
+- How many sheep does your household own? (If more than 97, enter 97)
+- How many chicken does your household own? (If more than 97, enter 97)
+- How much would it cost you to travel to your preferred HIV testing venue?
+- How much money do you normally make in one week of doing work and other income generating activities?  Please do not count money earned by your family, or money earned as interest or from renting goods and land to others.
+- Where is your primary workplace?
+- In the past 12 months, about how many months in total have you been away from your home?
+- Have you felt sick or had any type of illness in the past 4 weeks?
+- In the past 4 weeks have you visited a dispensary or health facility in order to seek treatment or advice about your health?
+- Which health facility did you visit for health care?
+- Have there been any days in the past 4 weeks when you felt too sick to be able to do any work?
+- Have you smoked cigarettes at any time in the past 12 months?
+- Do you currently smoke cigarettes?
+- In the last 1 week, how many cigarettes did you smoke?
+- Have you consumed alcoholic beverages at any time in the past 12 months?
+- How many drinks of alcohol (bottles, glasses, etc.) do you normally have in a week?
+- Do you think your chances of currently getting HIV/AIDS are high, moderate, low, or no risk at all?
+- Why do you think that you have a low chance or no risk of getting HIV/AIDS?
+- Why do you think that you have a moderate or high chance of having HIV/AIDS?
+- Have you ever taken an HIV test before your test for this study?
+- What is the main reason why you never tested for HIV before?
+- Approximately how many times have you been tested for HIV in the past 12 months?
+- When was the most recent time you took a test for HIV not including this study?
+- What was the location where you had your most recent HIV test?
+- Did you tell your primary partner the results of the HIV test?
+- Did you tell anyone other than your primary partner the results of the HIV test?
+- Do you know your primary partner's HIV status?
+- Is your primary partner HIV positive?
+- Do you have any other sexual partners who you know are HIV positive?
+- Have you heard about antiretroviral therapy (ART), the medicines for treating HIV?
+- Do you know any persons who are currently taking ART medicines?
+- Have you heard about PrEP (Pre-exposure prophylaxis): an HIV medication that is taken to prevent people from getting HIV?
+- Are you currently taking PrEP (HIV medication in order to prevent you from getting HIV)? This is usually a pill taken daily.
+- Do you know any persons who are currently taking PrEP?
+- When was the most recent time you had sexual intercourse?
+- Did you use a condom during the most recent time you had sexual intercourse?
+- Was the person with whom you had sexual intercourse most recently your primary sexual partner?
+- In total, with how many different persons have you had sexual intercourse in the past 12 months?
+- In the past 12 months, did you ever pay anyone (cash or other items) in exchange for having sexual intercourse?
+- The last time you paid or received gifts from someone in exchange for having sexual intercourse, was a condom used?
+- The last time you paid or received gifts from someone in exchange for having sexual intercourse, what did you receive in exchange for having sex with this person?
+- What was the total value of money, goods and gifts that the person gave you for this encounter?
+- In an average week, what is the total value of money, goods and gifts that you have paid or received in exchange for sex?
+- Over the past year, have you been diagnosed or treated for a sexually-transmitted infection?
+- How likely would you say you are to go for an HIV test again sometime in the next 12 months?
+- How likely would you say you are to go for an HIV test sometime in the future?
+- What concerns do you have about getting an HIV test?
+- What do you think your main motivation might be for getting another HIV test in the future?
+- Have you ever heard about HIV self-tests, which allow you to test yourself for HIV at home using a swab of your gums?
+- If you received a kit that allowed you to test yourself for HIV that is easy to use and is as accurate as tests at the health facility, how likely would you be to use the test?
+- If you had a choice between testing yourself for HIV at home with a self-test, or coming to a health facility for an HIV test, which would you prefer?
+- Imagine you are invited to play a game where you have the chance to win money but also a chance to lose your own money. In the game, you have a 50% chance of winning 10,000 Shillings and 50% chance of losing 1,000 Shillings. Would you play the game? If you choose not to play the game, you will neither win or lose anything.
+- Now suppose you have a 50% chance of winning 10,000 Shillings and 50% chance of losing 2,000 Shillings. Would you play the game?
+- Now suppose you have a 50% chance of winning 10,000 Shillings and 50% chance of losing 4,000 Shillings. Would you play the game?
+- Now suppose you have a 50% chance of winning 10,000 Shillings and 50% chance of losing 6,000 Shillings. Would you play the game?
+- Now suppose you have a 50% chance of winning 10,000 Shillings and 50% chance of losing 8,000 Shillings. Would you play the game?
+- Suppose you have a 50% chance of winning 10,000 Shillings and 50% chance of losing 500 Shillings. Would you play the game?
+- On a scale of 1-10, 10 being that you really like taking risks and 1 being that you do not like taking risks at all, how much do you like taking risks?
+- Suppose you have two choices, A or B. If you choose Option A, you will get 10,000 Shillings for sure. If you choose Option B, you will receive 20,000 Shillings with a 50% chance or you will receive 5,000 Shillings with a 50% chance.  Would you like to choose A or B? 
+- Now suppose you have two different choices, A or B. If you choose Option A, you will get 10,000 Shillings for sure. If you choose Option B, you will receive 20,000 Shillings with a 50% chance or you will receive 0 Shillings with a 50% chance.  Would you like to choose A or B?
+- Would the participant be willing to deposit money that they could receive, with interest, after their next HIV test?
+- What is your current marital status?
+- What is your current educational level?
+- What is your primary occupation?
+- Are you planning to stay in this community for at least 2 months during the next 6 months?
+- Did you have a negative rapid HIV antibody result before this interview?
+- How many HIV-tests have you done in the last 12 months?
+- Are you willing to re-test for HIV within the next 6 months?
+- Have you had more than one sexual partner?
+- Have you had a sexual partner that you know to be HIV-positive?		   	
+- Have you been diagnosed or treated for a sexually transmitted infection?	
+- Have you received any compensation or gifts in exchange for sex?	
+- Have you paid or given any compensation or gifts in exchange for sex?	
+- Where were you when recruited for this interview?
+- Did the participant accept or decline the deposit at the enrollment visit?	
+- Did the participant accept or decline the deposit today? (20,000 UGX)
+- Did the participant request a deposit refund today? (20,000 UGX)
+- Did the person make at deposit at BL (or within 1 week)
+- Which items does your household have?
+
+# Target outcome questions:
+- After 3 months: Did you come back for Month 3 retesting?
+- After 6 months: Did you come back for month 6 retesting?
+
+# Response format:
+Yes/No
+
+# Treatment arms:
+- Control
+- Incentive
+- Deposit
+
+# Post-treatment framing appended to the system message:
+You were told you would be contacted at 3 months and 6 months from the beginning of the initiative to verify whether you had retested for HIV. Both follow-up points have now passed. 

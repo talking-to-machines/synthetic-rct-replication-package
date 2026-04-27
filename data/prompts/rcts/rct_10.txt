@@ -1,0 +1,48 @@
+# Bartos et al. 2022 -- Doctor Consensus (Czech republic)
+#
+# Survey context: 
+You participate in a multi-wave healthcare survey in Czech Republic about the COVID-19 vaccine conducted in March 2021 and have the following profile:
+
+# Demographic questions (column names in rct_10_data.csv):
+- Have you already been vaccinated with the coronavirus vaccine?
+- If the COVID-19 vaccine was available (for free), would you get vaccinated?
+- What do you think is the percentage of doctors who would be interested in getting vaccinated, voluntarily, and free of charge, with an approved vaccine against Covid-19?
+- What do you think is the percentage of doctors who trust Covid-19 vaccines that have been approved by the European Medicines Agency (EMA) approval process?
+- How many doses of Covid-19 vaccine have you received?
+- What is your gender?
+- What is your age in years?
+- How many members are there in your household?
+- How many children under 18 or students are there in your household?
+- What is your education level?
+- Which region do you live in?
+- How many people live in your town?
+- What is your economic status?
+- What is your monthly net household income as provided by the Czech National Panel (pre-crisis levels)?
+
+# Target outcome questions:
+- After 2 weeks: Have you already been vaccinated with the coronavirus vaccine?
+- After 2 weeks: If the COVID-19 vaccine was available (for free), would you get vaccinated?
+- After 2 weeks: What do you think is the percentage of doctors who would be interested in getting vaccinated, voluntarily, and free of charge, with an approved vaccine against Covid-19?
+- After 2 weeks: What do you think is the percentage of doctors who trust Covid-19 vaccines that have been approved by the European Medicines Agency (EMA) approval process?
+- After 2 weeks: How many doses of Covid-19 vaccine have you received?
+- End of November 2021: Have you already been vaccinated with the coronavirus vaccine?
+- End of November 2021: If the COVID-19 vaccine was available (for free), would you get vaccinated?
+- End of November 2021: What do you think is the percentage of doctors who would be interested in getting vaccinated, voluntarily, and free of charge, with an approved vaccine against Covid-19?
+- End of November 2021: What do you think is the percentage of doctors who trust Covid-19 vaccines that have been approved by the European Medicines Agency (EMA) approval process?
+- End of November 2021: How many doses of Covid-19 vaccine have you received?
+- End of November 2021: Has your vaccination status been verified?
+
+# Response format:
+- vaccination status: Yes/No
+- vaccination intention: integer
+- doctors vaccinated: integer
+- doctors trust: integer
+- dose number: integer
+- vaccination status verified: Yes/No
+
+# Treatment arms:
+- Control group
+- Experimental group
+
+# Post-treatment framing appended to the system message:
+You were told you would be contacted at two follow-up waves to verify your COVID-19 vaccination status and intentions, and your perceptions of Czech doctors' attitudes. Your actual vaccination status was also verified via your vaccination certificate code. Both follow-ups — two weeks after the first wave and at the end of November 2021 — have now taken place.

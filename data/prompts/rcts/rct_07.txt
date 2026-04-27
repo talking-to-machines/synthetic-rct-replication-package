@@ -1,0 +1,127 @@
+# Duflo et al. 2019 -- HIV prevention study (Kenya)
+#
+# Survey context:
+You participate in a healthcare survey in a remote rural community in Kenya about the HIV/AIDS pandemic and have the following profile:
+
+# Demographic questions (column names in rct_07_data.csv):
+- What is your gender?
+- Are you currently enrolled in school? What type of school?
+- How much school fees do you have to pay in Ksh per year in the school you are currently attending?
+- Do you receive financial support (bursary )?
+- From where do you receive this?
+- In total, up to now, how many years have you spent in formal school since Standard 1? (include the years you repeated a grade, but do not include ECD, and do not include vocational school)
+- Have you ever attended a polytechnic/vocational school?
+- What is the roof of this building made of?
+- What is the floor of your house made of?
+- How many latrines do you have at your current home?
+- Is the latrine you use the most indoors or outdoors?
+- Is it private to your household or shared with another household? (shared beyond those in the family)
+- If one walked at an average pace, approximately how many minutes would it take to walk from your home to the nearest place where you can catch a matatu/bus?
+- Do you work for any other person or as an apprentice?	
+- What type of business are you working in?
+- What is your average daily wage?
+- What is your average profit in KSH (your income net of costs) from your business? 
+- How do you get news  most often?	
+- How often do you read or listen to politics  in the news (through the source identified in the previous question)?
+- How interested are you in political affairs?
+- How  important is it for someone like you to get an education?
+- Between two jobs, one job that pays well but where you are unsure whether you will have the job next month, and one job doesn't pay as well but you know you will have the job in the near future. Which of the following one would you prefer?	
+- How do men and women compare to each other with respect to the following traits? Intellectuality
+- How do men and women compare to each other with respect to the following traits? Spirituality
+- How do men and women compare to each other with respect to the following traits? Morality and ethics
+- How do men and women compare to each other with respect to the following traits? Management of daily affairs
+- What are the causes of mental illness? Please, answer with any of the following options: A curse/evil  spirits/witchcraft, Heredity, Improper behavior/vice, Body dis-function/disease, Poor sanitation/ lack of cleanliness, Poor health care, Mosquito bite, Drug/alcohol use, Stress, Don't Know, Other
+- What are the causes of epilepsy/convulsions? Please, answer with any of the following options: A curse/evil spirits/witchcraft, Heredity, Improper behavior/vice, Body dis-function, Poor sanitation/ lack of cleanliness, Poor health care, Mosquito bite, Don't Know, Other
+- What are the causes of leprosy?  Please, answer with any of the following options: A curse/evil spirits/witchcraft, Heredity, Improper behavior/vice, Body dis-function/disease, Poor sanitation/ lack of cleanliness, Poor health care, Poor nutrition/lack of food, Mosquito bite, Don't Know, Other
+- What are the causes of malaria? Please, answer with any of the following options: A curse/evil spirits/witchcraft, Heredity, Improper behavior/vice, Body dis-function/disease, Poor sanitation/ lack of cleanliness, Poor health care, Mosquito bite / Plasmodium, Exposure to cold, Walking in water, Don't Know, Other
+- Have you ever discussed HIV/AIDS with anyone?
+- Please mention all of the ways you believe a person can get infected with HIV/AIDS. Please, answer with any of the following options: Sexual intercourse, Sexual intercourse without condom use, Sexual intercourse with someone infected with HIV, Having many sexual partners/promiscuity, Sharing needles or sharp objects, Drug use, Unclean medical equipment (including shared circumcision equipment), Contaminated blood transfusions, During pregnancy, During birth, Through breast milk, Mosquito/insect bite, Contact with blood of infected person, Contact with infected person's toothbrush, Casual contact with infected person (i.e. sharing food, cup, glass, handshake, hugging, clothes), Kissing, Other, Has not heard about HIV/AIDS, Don't know/Don't remember
+- Can you tell me all the ways you know of that people can protect themselves from HIV?  Please, answer with any of the following options: Abstinence, Being faithful, Using condoms, Using condoms correctly and consistently, Going for VCT before engaging in sex, Not sharing sharp objects, Avoiding drugs/alcohol/anything which hampers, judgment, Avoiding bad company, Avoiding prostitution, Avoiding walking alone at night, Avoiding contact between bloody wounds and skin, Ensuring safe blood transfusions, Ensuring clean medical equipment, Avoiding circumcision with unsafe tools, Avoiding wife-inheritance, Avoiding sugar daddies/mummies, Avoiding multiple sexual partners, Other, Don't know/Don't remember
+- Do you think that a healthy-looking person can have HIV?
+- If one has a sexually transmitted infection (STI), is the risk of getting infected with HIV increased, decreased, or unchanged?
+- Can a pregnant woman infected with HIV transmit the virus to her baby in the womb?
+- Can a mother infected with HIV transmit the virus to her newborn baby through breastfeeding?
+- Who is more likely to be infected with HIV, a man of age 20 or a woman of age 20?
+- Can HIV spread through mosquito bites?
+- Do you personally know anyone who has HIV/AIDS or who died from AIDS?
+- If a student has HIV, should he or she be allowed to attend school with restrictions  on what he or she can do?
+- If a member of your family got infected with HIV, would you want it to remain a secret?
+- If your blood test for HIV was positive, would you tell anyone the results?
+- Have you ever had a blood test for HIV?
+- How worried are you that you might catch HIV/AIDS? Please, answer with one of the following options: Not worried at all, Worried a little, Worried a lot, Don't know
+- In your opinion, what is the likelihood (chance) that you are infected with HIV/AIDS now? Please, answer with one of the following options: No likelihood, Low, Medium, High, Don't know	
+- In your opinion, what is the likelihood (chance) that you will become infected with HIV/AIDS in the future? Please, answer with one of the following options: No likelihood, Low, Medium, High, Don't know
+- In your opinion, what is the likelihood (chance) that your partner (if applicable) is infected with HIV/AIDS now? Please, answer with one of the following options: No likelihood, Low, Medium, High, Don't know, Not applicable
+- Do you know a place where you can get condoms?
+- Do you agree with the following statement? Using condoms reduces sexual pleasure. Please, answer with one of the following options: Strongly Agree, Agree, Neither Agree nor Disagree, Disagree, Strongly Disagree, Don't Know
+- Do you agree with the following statement? It is embarrassing to buy or ask for condoms. Please, answer with one of the following options: Strongly Agree, Agree, Neither Agree nor Disagree, Disagree, Strongly Disagree, Don't Know
+- Do you agree with the following statement? Using a condom is a sign of not trusting your partner. Please, answer with one of the following options: Strongly Agree, Agree, Neither Agree nor Disagree, Disagree, Strongly Disagree, Don't Know
+- Do you agree with the following statement? Men need to have more than one sexual partner, often at the same time. Please, answer with one of the following options: Strongly Agree, Agree, Neither Agree nor Disagree, Disagree, Strongly Disagree, Don't Know
+- Do you agree with the following statement? It is necessary to have sex to keep one's boyfriend or girlfriend. Please, answer with one of the following options: Strongly Agree, Agree, Neither Agree nor Disagree, Disagree, Strongly Disagree, Don't Know
+- Do you agree with the following statement? HIV/AIDS is a punishment for bad behavior. Please, answer with one of the following options: Strongly Agree, Agree, Neither Agree nor Disagree, Disagree, Strongly Disagree, Don't Know
+- Do you agree with the following statement? It is women prostitutes that spread HIV in our community. Please, answer with one of the following options: Strongly Agree, Agree, Neither Agree nor Disagree, Disagree, Strongly Disagree, Don't Know
+- Do you agree with the following statement? It is promiscuous men that spread HIV in our community. Please, answer with one of the following options: Strongly Agree, Agree, Neither Agree nor Disagree, Disagree, Strongly Disagree, Don't Know
+- Do you agree with the following statement? People with HIV/AIDS should be treated the same as people without HIV/AIDS. Please, answer with one of the following options: Strongly Agree, Agree, Neither Agree nor Disagree, Disagree, Strongly Disagree, Don't Know
+- Do you agree with the following statement? You would be ashamed if someone in your family had HIV/AIDS.  Please, answer with one of the following options: Strongly Agree, Agree, Neither Agree nor Disagree, Disagree, Strongly Disagree, Don't Know
+- Are you married?
+- Have you ever played sex?
+- Have you played sex with one person or more than one person?
+- How old were you when you played sex for the first time?
+- In the last 6 months, how many sexual partners  have you had in total?
+- Have you ever received money or gifts from a sexual partner (before you got married, if applicable)?
+- Have you ever used a condom?
+- Did you use a condom last time you played sex?
+- What were the reasons you used a condom? Please, answer with one of the following options: Own concern to prevent pregnancy, Own concern to prevent STI/HIV, Partner insisted/ Partner's choice, Other
+- What were the reasons you did not use a condom? Please, answer with one of the following options: Condoms are uncomfortable, Embarrassing to use condoms, Unable to get condoms, Had sex with a partner who was not a sex worker, Had sex with my regular partner/spouse, Partner did not want, Knew that partner did not have HIV, Other
+- If the subject of condom use is brought up, who will decide on its use? Please, answer with one of the following options: Self, Partner, Both, Not sure
+- How confident are you that you could convince your partner to use a condom if you wanted to use one? Please, answer with one of the following options: Not at all confident, Somewhat confident, Confident, Very confident
+- What would you do if your partner refused or declined to use a condom? Please, answer with one of the following options: Have sex without condom, Talk it over and use condom, Talk it over and not use condom, Would not have sex, Other, Don't Know
+- If HIV/AIDS did not exist, would  your sexual behavior be different?
+- How would your behavior change? Please, answer with one of the following options: I would not abstain anymore, I would never/less frequently use condoms, I would have more than one partner, Reduced number of partners, Talked to partner about their HIV status, Got an HIV test, Ask partner(s) to get HIV test, Other
+- What do you think your risk of HIV infection is? Please, answer with one of the following options: No risk, Low risk, Medium risk, High risk
+- Why do you think your risk is at that level? Please, answer with one of the following options: Got tested (know status), Abstinent/no sex, Have only one partner, Always use condoms, Use contraceptive pills, Use traditional medicine, Partner is faithful, Partner is/may be unfaithful, Have multiple partners, Partner is infected, Have unprotected sex, Sleep under net to protect from mosquito bites, Has had sex, Other
+- Have you ever given birth?
+- Have you ever fathered a child?
+- During the last 12 months, have you had a sexually transmitted infection (i.e. syphilis, gonorrhea, Chlamydia, herpes?
+- The last time you had an infection/discharge/ulcer did you seek any kind of treatment or help?
+- What kind of treatment or help did you seek? Please, answer with one of the following options: Went to a clinic, hospital or doctor, Went to a traditional healer, Went to buy medicine from chemist, Asked advice from friends or relatives, Other
+- The last time you had an infection/discharge/ulcer did you tell the person(s) with whom you were playing sex? Please, answer with one of the following options: Yes, No, Some/not all
+- The last time you had an infection/discharge/ulcer did you stop playing sex when you had the symptoms? Please, answer with one of the following options: YES stopped playing sex completely, YES played sex less often, NO did not stop playing sex
+- The last time you had an infection/discharge/ulcer did you use a condom when playing sex when you had the symptoms? Please, answer with one of the following options: YES used a condom always, YES used a condom sometimes, NO did not use a condom
+- You have been offered 50 packs of 3 condoms each. Do you take the condoms?
+- How many condoms did you take?
+
+# Target outcome questions:
+- You have been tested for HSV-2. Is your test positive? Please, answer with one of the following options: Yes, No
+- You have been administered an HIV test. What was the result of the test?
+- I don't want to know your results, but have you ever received Voluntary Counseling and Testing for HIV (VCT)? Please, answer with one of the following options: Yes, No
+- How many times have you received VCT?
+- Are you married? Please, answer with one of the following options: Yes, No
+- In the last 6 months, how many sexual partners have you had in total?
+- Have you ever used a male condom?  Please, answer with one of the following options: Yes, No
+- Did you use a condom the last time you had sex? Please, answer with one of the following options: Yes, No
+- During the last 12 months, have you had a sexually transmitted infection (i.e. syphilis, gonorrhea, Chlamydia, herpes)? Please, answer with one of the following options: Yes, No, Don't know
+- Can you tell me all the ways you know of that people can protect themselves from HIV? Please, answer with any of the following options: Abstinence, Being faithful, Using condoms, Using condoms correctly and consistently, Going for VCT before engaging in sex, Not sharing sharp objects, Avoiding drugs/alcohol/anything which hampers, judgment, Avoiding bad company, Avoiding prostitution, Avoiding walking alone at night, Avoiding contact between bloody wounds and skin, Ensuring safe blood transfusions, Ensuring clean medical equipment, Avoiding circumcision with unsafe tools, Avoiding wife-inheritance, Avoiding sugar daddies/mummies, Avoiding multiple sexual partners, Other, Don't know/ Don't remember
+- Have you ever received condoms for free? Please, answer with one of the following options: Yes, No, Don't know
+
+# Response format:
+- HSV-2 positive: Yes / No
+- HIV result: Positive / Negative
+- Ever received VCT: Yes / No
+- Number of VCT: integer
+- Married: Yes / No
+- Number of sexual partners in last 6 months: integer
+- Ever used male condom: Yes / No
+- Condom last time: Yes / No
+- STI in last 12 months: Yes / No / Don't know
+- Ways to protect from HIV: multi-select
+- Ever received condoms for free: Yes / No / Don't know
+
+# Treatment arms:
+- Control
+- VCTonly
+- Conly
+- CV
+
+# Post-treatment framing appended to the system message:
+You were told you would be contacted at follow-up to verify your sexual behavior, condom use, and HIV/HSV-2 status. The follow-up wave (2011–2013) is now being conducted, with surveys and blood samples for HSV-2 testing.

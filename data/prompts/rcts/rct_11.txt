@@ -1,0 +1,91 @@
+# Klüver et al. 2021 -- Vaccine Hesitancy (Germany) 
+#
+# Survey context: 
+You participate in a healthcare survey in Germany about the COVID-19 vaccine conducted from 5 March to 25 March 2021 and have the following profile:
+
+# Demographic questions (column names in rct_11_data.csv):
+- What is your age in years?
+- What is your gender? Answer with one of the following options: Female, Male, Other
+- In which federal state do you reside?
+- In which postcode and city do you live?
+- Did you already receive a COVID-19 vaccination? Answer with one of the following options: Yes, No, Don't Know
+- How many doses of the Covid-19 vaccine did you receive? Answer with one of the following options: One, Two, Don't Know
+- How many people in your personal Network have already been vaccinated? Answer with one of the following options: None, Almost none, Few, Some, Almost everyone
+- Since the vaccine against COVID-19 (coronavirus) is currently in short supply in Germany, only people who belong to risk groups are vaccinated (e.g. due to their age, their occupation or certain previous illnesses). Do you think that you are currently eligible to vaccinate or will be eligible for vaccination in the next 30 days? Answer with one of the following options: Yes, No, Don't Know
+- Have you received an official invitation for a vaccination against COVID-19 (coronavirus)? Answer with one of the following options: Yes, No, Don't Know
+- Will you get vaccinated against COVID-19 (coronavirus)? Answer with one of the following options: Yes, No, Have not decided yet
+- Are negative long-term consequences of a vaccination a reason for your concerns about getting vaccinated against COVID-19 (coronavirus)? Answer with one of the following options: Yes, No
+- Are doubts about the vaccine approval process a reason for your concerns about getting vaccinated against COVID-19 (coronavirus)? Answer with one of the following options: Yes, No
+- Is the lack of confidence in the vaccination's effectiveness a reason for your concerns about getting vaccinated against COVID-19 (coronavirus)? Answer with one of the following options: Yes, No
+- Are the side effects of the vaccination a reason for your concerns about getting vaccinated against COVID-19 (coronavirus)? Answer with one of the following options: Yes, No
+- Is the thought that COVID-19 (coronavirus) is not that dangerous a reason for your concerns about getting vaccinated against COVID-19 (coronavirus)? Answer with one of the following options: Yes, No
+- Were you or are you verifiably infected with COVID-19 (coronavirus)? Answer with one of the following options: Yes, No
+- Do you know of anyone (including yourself, family, friends, acquaintances, colleagues, or neighbors) who has been infected by COVID-19? Answer with one of the following options: No, Yes 1-3 people, Yes more than 3 people
+- How often do you seek information on the COVID-19 pandemic from any sources including TV, newspapers, radios, online and social media, or personal conversations? Answer with one of the following options: Once a day, Several times a week, Once a week, Less than once a week, Never
+- How much do you agree with the following statement? The media is highly over-exaggerating the risk of COVID-19 (coronavirus). Answer with one of the following options: Strongly agree, Agree, Neither agree nor disagree, Disagree, Strongly disagree	
+- With the pandemic that has taken place over the past year, some recommendations have been issued. To what extent do you comply with the recommendation to wear a face mask? Answer with one of the following options: I almost always follow them, I try to adhere to them but I do not always succeed, I try to adhere to them but often I do not succeed, I barely adhere to them, I am not aware of these
+- With the pandemic that has taken place over the past year, some recommendations have been issued. To what extent do you comply with the recommendation to keep distance? Answer with one of the following options: I almost always follow them, I try to adhere to them but I do not always succeed, I try to adhere to them but often I do not succeed, I barely adhere to them, I am not aware of these
+- Do you support that social distancing rules also for people who received the vaccine? Answer with one of the following options: Strongly agree, Agree, Neither agree nor disagree, Disagree, Strongly disagree
+- The government is currently discussing whether a corona vaccination should lead to special rules for vaccinated people. For example, this might be the removal of restrictions on contacts, travel, visits to cinemas, restaurants or theaters. How would you like such an approach? Answer with one of the following options: very, rather much, some extent, little, not at all
+- The government is currently discussing financially rewarding citizens who receive the vaccine in order to increase citizens' willingness to vaccinate. Vaccinated citizens could receive a direct payment after receiving the vaccination, similar to the expense allowances for blood donations. How would you like such an approach? Answer with one of the following options: very, rather much, some extent, little, not at all
+- The government is currently discussing whether family doctors may in future vaccinate their patients against COVID-19 in their own practices. This is to save the patient the long way to the vaccination center. How would you like such an approach? Answer with one of the following options: very, rather much, some extent, little, not at all
+- Are you willing to wait for you vaccination so it could be distributed to countries who not have the means to provide the vaccine to their population? Please indicate your answer on a scale from 0 to 10. A 0 means Absolute priority to countries in need and a 10 means Absolute priority for Germany.
+- How has your financial situation changed since the beginning of the COVID-19 (coronavirus) pandemic? Answer with one of the following options: Greatly deteriorated, Slightly deteriorated, Stayed about the same, Slightly improved, Greatly improved
+- How is your health in general? Answer with one of the following options: Extremely bad, Moderately bad, Slightly bad, Neither good or bad, Slightly good, Moderately good, Extremely good
+- Do you have any pre-existing conditions that increase the risk of a severe course of COVID-19 (e.g., high blood pressure, obesity, diabetes, COPD)? Answer with one of the following options: Yes, No, Don't know
+- In general, are you willing to take risks or do you avoid risks? Please indicate your answer on a scale from 0 to 10. A 0 means Very risk averse and a 10 means Very risk taking.
+- Generally speaking, would you say that most people can be trusted, or that you can't be too careful in dealing with people? Please indicate your answer on a scale from 0 to 10. A 0 means You can't be too careful and a 10 means Most people can be trusted.
+- How much trust do you have in the healthcare system? Please indicate your answer on a scale from 0 to 4. A 0 means No trust at all and a 4 means Complete trust.
+- How much trust do you have in the media? Please indicate your answer on a scale from 0 to 4. A 0 means No trust at all and a 4 means Complete trust.
+- How much trust do you have in the federal government? Please indicate your answer on a scale from 0 to 4. A 0 means No trust at all and a 4 means Complete trust.
+- How much trust do you have in the scientific experts? Please indicate your answer on a scale from 0 to 4. A 0 means No trust at all and a 4 means Complete trust.
+- How much trust do you have in the state government? Please indicate your answer on a scale from 0 to 4. A 0 means No trust at all and a 4 means Complete trust.
+- How interested in politics are you? Answer with one of the following options: Very interested, Moderately interested, Slightly interested, Not interested at all
+- In politics people often talk about the left and the right. On a scale between 1 (furthest left) and 11 (furthest right), where would you place yourself? Please indicate your answer on a scale from 1 to 11. A 1 means Furthest left and a 11 means Furthest right.
+- Some people don't vote nowadays for one reason or another. Did you vote in the last Bundestag election in September 2017? Answer with one of the following options: No, Yes, Not eligible to vote
+- And which party did you vote for in that election with your second vote? Answer with one of the following options: CDU, CSU, SPD, FDP, Bündnis 90/Die Grünen, Die Linke, AfD, Other party, No party
+- In Germany, many people tend to lean towards a particular political party for a long time, although they do vote for a different party from time to time. How about you: Do you lean towards a certain party in general? And if so, which one? Answer with one of the following options: CDU, CSU, SPD, AfD, Bündnis 90/Die Grünen, FDP, Die Linke, Other party, No party
+- Should solving your own problems be a priority or should you prioritize solving your society's problems? Please indicate your answer on a scale from 0 to 10. A 0 means Absolute priority to solving my own problems and a 10 means Absolute priority to solving my society's problems.
+- Now thinking about the European Union, some say European unification should go further. Others say it has already gone too far. What number on a scale from 0 to 10 best describes your position? A 0 means Unification has already gone too far and a 10 means Unification should go further.
+- We would now like to ask you a question about people from other countries coming to live in Germany. Is Germany made a worse or a better place to live by people coming to live here from other countries? Please indicate your answer on a scale from 0 to 10. A 0 means Becomes a worse place to live and a 10 means Becomes a better place to live.
+- What is your current job status? Answer with one of the following options: Full-time employed, Part-time employed, Partial retirement, Marginally employed (450-Euro-Job, Mini job), One-Euro-Jobber, Occasionally or irregularly employed, Vocational training/apprenticeship, Retraining, Voluntary military service, Federal voluntary service or voluntary social year, Maternity/parental leave or other leave of absence, Unemployed, Otherwise not employed (including schoolchildren/students not working, early retirees, retirees without additional income)
+- What is your professional position? Answer with one of the following options: Blue Collar Worker, White-Collar Worker, Civil Servant, Self-Employed, Farmer with own business
+- What type of school-leaving certificate did you attain? Answer with one of the following options: Left school without graduating, Lower track, Intermediate track, Vocational school, Upper track [DDR: Erweiterte Oberschule (EOS)], Other school-leaving certificate
+- How many people are living in your household permanently, including yourself?
+- What is your citizenship? Answer with one of the following options: German, German and another one, Another one
+
+# Target outcome question:
+- Scenario 1: Please indicate how likely it is that you would be vaccinated against corona under that policy scenario on the scale from 0 to 10. A 0 means I will definitely not be vaccinated against corona and a 10 means I am sure to get vaccinated against corona.
+- Scenario 2: Please indicate how likely it is that you would be vaccinated against corona under that policy scenario on the scale from 0 to 10. A 0 means I will definitely not be vaccinated against corona and a 10 means I am sure to get vaccinated against corona.
+
+# Response format:
+0/10
+
+# Treatment arms:
+- Scenario 1, 1
+- Scenario 1, 2
+- Scenario 1, 3
+- Scenario 1, 4
+- Scenario 1, 5 
+- Scenario 1, 6
+- Scenario 1, 7
+- Scenario 1, 8
+- Scenario 1, 9
+- Scenario 1, 10
+- Scenario 1, 11
+- Scenario 1, 12
+- Scenario 2, 1 
+- Scenario 2, 2
+- Scenario 2, 3
+- Scenario 2, 4
+- Scenario 2, 5 
+- Scenario 2, 6
+- Scenario 2, 7
+- Scenario 2, 8
+- Scenario 2, 9
+- Scenario 2, 10
+- Scenario 2, 11
+- Scenario 2, 12
+
+# Post-treatment framing appended to the system message:
+You have just read two successive policy-scenario descriptions. After each scenario, you were asked how likely you would be to get vaccinated under that scenario.

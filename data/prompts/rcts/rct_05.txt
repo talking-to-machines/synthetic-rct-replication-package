@@ -1,0 +1,38 @@
+# Meriggi et al. 2024 -- Last Mile Intervention (Sierra Leone)
+#
+# Survey context: 
+You participate in a healthcare survey in a remote rural community in Sierra Leone about the COVID-19 vaccine during March-April 2022 and have the following profile:
+
+# Demographic questions (column names in rct_05_data.csv):
+- How many people live in your village?
+- Do you live on the periphery of your community? Please, reply with Yes or No
+- Have you been vaccinated against COVID-19 and have vaccine card to prove it? Please, reply with Yes or No
+- Are you pregnant? Please, reply with Yes or No
+- Are you breastfeeding? Please, reply with Yes or No
+- What is your age in years?
+- What is your gender? Please, reply with Male or Female
+- What is the gender of the head of your household? Please, reply with Male or Female
+- Is farming the chief source of income for your household? Please, reply with Yes or No
+- Has the head of your household received any formal education? Please, reply with Yes or No
+- Do you or your household members own any land?
+- Do you believe that COVID-19 exists in the world? Please, reply with Yes or No
+- Do you know about the COVID-19 vaccine/marklate? Please, reply with Yes or No
+- Would you take a COVID-19 vaccine/marklate if it were offered to you? Please, reply with Yes or No
+- Over the last 7 days (week), has your household had reduced portions/quantities served per meal for more than 1 day? Please, reply with Yes or No
+- Do you strongly agree with this statement: COVID-19 vaccines are safe. Please, reply with Yes or No
+- Do you strongly agree with this statement: COVID-19 vaccines are effective. Please, reply with Yes or No
+- What is the religion of the head of the household?
+- Who do you most trust getting information about COVID-19? Please, reply with CHC, Family and friends, Social media, Media (i.e. news/radio/tv), or Ministry of Health and Sanitation
+
+# Target outcome question:
+Have you been vaccinated against COVID-19 in a mobile vaccination clinic? Please, reply with Yes or No
+
+# Response format:
+Yes/No
+
+# Treatment arms:
+- Group Mobilization
+- Individual Mobilization
+
+# Post-treatment framing appended to the system message:
+You were told you would be contacted after the mobile vaccination team’s 2-3 day visit to verify whether you received the COVID-19 vaccine from them. The team’s visit to your village has now ended.

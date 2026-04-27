@@ -1,0 +1,212 @@
+# Fink et al. 2018 -- C4D (Ghana)
+#
+# Survey context: 
+You are a woman participating in a longitudinal healthcare survey in Ghana, focused on the adoption and consistent practice of behaviors critical to preventing under-five mortality. Baseline information was collected in 2012, before an initiative was implemented in your area, and have the following profile: 
+
+# Demographic questions (column names in rct_06_data.csv):
+- In which district do you live?
+- In which region do you live?
+- Do you live in a urban or rural area?
+- Do you have a mobile phone?
+- Whose number is this?
+- What is your age?
+- Were you born in this community?
+- Where were you born?
+- How many years have you lived in this community?
+- Who is the head of the household?
+- What is your main religious denomination?
+- Are you currently married?
+- What is your spouse's religious denomination?	
+- What was the highest level of education attained by you?
+- What was the highest level of education attained by your spouse?
+- How many times have you ever given birth in your lifetime?
+- How many children would you like to have in your lifetime?
+- Are you able to read a sentence?
+- In the last year have you sought health-related information?
+- What made you decide to look for that information?
+- Do you know any CBA in your community?
+- How well do you know the CBA that you know the best?
+- When was the last time you talked to this CBA?
+- Have you talked about health-related topics (e.g., diarrhea, exclusive/complementary breastfeeding, insecticide treated nets, malaria) with this CBA?
+- How frequently do you talk to this CBA about being healthy?
+- Do you trust the information this CBA gives?	
+- Family is top 3 source to hear about staying healthy
+- Community is top 3 source to hear about staying healthy
+- Radio is top 3 source to hear about staying healthy	
+- TV is top 3 source to hear about staying healthy	
+- Clinic/Hospital is top 3 source to hear about staying healthy	
+- Traditional healer is top 3 source to hear about staying healthy
+- Newspaper is top 3 source to hear about staying healthy
+- Books/magazine is top 3 source to hear about staying healthy
+- Internet is top 3 source to hear about staying healthy
+- Mobile phone is top 3 source to hear about staying healthy
+- Poster/Billboard phone is top 3 source to hear about staying healthy
+- NGO/Outreach phone is top 3 source to hear about staying healthy
+- Friends phone is top 3 source to hear about staying healthy
+- What means of transportation do you most often use to go to clinic/hospital?
+- How many hours does it take to get to the nearest clinic/hospital?
+- Not including CBAs, when was the last time you saw a health worker?
+- Have you ever sent or received an SMS text message?
+- How many SMS messages do you send or receive in a typical week?
+- Have you done something to prevent malaria (e.g., slept under mosquito treated nets, sprayed the house, used anti-insect body lotion)?
+- Have you ever heard about an insecticide treated net?	
+- Do you understand an insecticide treated net is a special type of net?
+- Last night, did you sleep under an insecticide treated net?
+- Last night, did your youngest child sleep under an insecticide treated net?
+- Last night, how many of your own children under 5 slept under an insecticide treated net?
+- During your last pregnancy, how frequently did you sleep under an insecticide treated net?
+- Do you always sleep under an insecticide treated net?
+- Do your children always sleep under an insecticide treated net?
+- How serious or unimportant of a problem is malaria?
+- Is mortality in children a major problem malaria causes?
+- Is mortality in pregnant women a major problem malaria causes?
+- Is mortality a major problem malaria causes?
+- Is poor health a major problem malaria causes?
+- Is anemia a major problem malaria causes?
+- Others are the major problems that malaria causes
+- Are symptoms like vomit, diarrhea, and fever the major problems that malaria causes?
+- In the next six months, how likely it is that one of your children will get malaria?
+- Have you ever been scared for the life of one of your children due to malaria?
+- Have you ever known a child that died from malaria?
+- Was the child who died from malaria your own child?
+- Do mosquito bites cause malaria?
+- Do unsanitary conditions cause malaria?	
+- Do weather conditions cause malaria?
+- Is malaria caused by eating dirty food?
+- Is malaria caused by drinking dirty water?
+- Do houseflies cause malaria?
+- Is malaria caused by the air?
+- Is malaria caused by witchcraft?
+- Is malaria caused by other factors?
+- Is malaria caused by lack of personal or environmental hygiene?
+- Should everyone sleep under a insecticide treated net?
+- Should only infants sleep under a insecticide treated net?
+- Should only children sleep under a insecticide treated net?
+- Should only adults sleep under a insecticide treated net?
+- Should only elderly sleep under a insecticide treated net?
+- Should only pregnant women sleep under a insecticide treated net?
+- Should only sick people sleep under a insecticide treated net?
+- Should only other categories of people not previously mentioned sleep under a insecticide treated net?
+- How many of your friends do you think sleep under an insecticide treated net?
+- How many children in your community do you think sleep under an insecticide treated net?
+- Have you ever advised anyone in this community on insecticide treated nets?
+- Has anyone in your family ever encouraged the use of insecticide treated nets?
+- Do you know any way to take care of an insecticide treated net?
+- You do not know how an insecticide treated net is treated
+- You do not know anything about insecticide treated nets
+- How often do you wash your hand with only water?
+- The last time you cleaned your hands, what did you use?
+- How many times did you wash your hands yesterday?
+- The last time you ate, did you wash your hands before eating?
+- After the last time you defecated, did you wash your hands?
+- Are there times when you think you should wash your hands but you do not?
+- I did not wash my hands with soap because there was not enough water
+- I did not wash my hands with soap because there was not enough money to buy some
+- I did not wash my hands with soap because there was not enough time
+- I did not wash my hands with soap because there was no place where to wash my hands
+- I did not wash my hands with soap because of other reasons
+- I did not wash my hands with soap because I forgot or I was lazy
+- I don't know why I did not wash my hand with soap
+- Do you wash your hand because you have heard that cleanliness is important?
+- Do you wash your hand because you have heard that it kills germs?
+- Do you wash your hand because you have heard that it prevents diarrhea?
+- Do you wash your hand because you have heard that it prevents food contamination?
+- Do you wash your hand because you have heard that it prevents stomach being upset?
+- Do you wash your hand because you have heard that it prevents water contamination?
+- Do you wash your hand because you have heard that it prevents the spread of germs?
+- Do you wash your hand because you have heard that it makes the hands smell nice?
+- Do you wash your hand because you have heard that it prevents other illnesses?
+- Do you wash your hand because you have heard that it helps staying healthy?
+- Do you wash your hand because you have heard of other reasons?
+- Do you wash your hand because you have heard that reduces risk of malaria?
+- Do you wash your hand because you do not know?
+- How often is okay to wash your hands with only water?
+- Do you think it is important to wash your hands before some activities such as eating, feeding a child, etc.?
+- Is there a place in your community where you can buy soap?
+- Has anyone ever encouraged you to wash your hands with soap?
+- Have you ever encouraged someone in your community to wash their hands with soap?
+- Do you teach your children to wash their hands with soap?
+- Have you really never heard anyone mention that washing hands is a good health practice?
+- Has your child really never had diarrhea?
+- Have you ever used ORS to treat a child of yours?
+- Why have you never used ORS to treat a child of yours?
+- Do you know a place where you could buy a packet of ORS?
+- The last time you used ORS, did you make it at home or buy a packet?
+- The last time you used ORS, how long the child was sick before you used it?
+- How serious or unimportant of a problem do you think diarrhea is?
+- Have you ever been scared of the life of one of your children due to diarrhea?
+- Have you never really known which are the causes of diarrhea?
+- Have you never really known what to do when a child gets diarrhea?
+- Do you understand what an ORS is?
+- At what age do you think it is alright to give a child ORS?
+- Can you think of a time you ever wanted to use ORS but did not?
+- Has no one really encouraged you to use ORS?
+- In the next 6 months, how likely it is that one of your children will get diarrhea?
+- Have you ever known a child that died from diarrhea?
+- Was the child who died from diarrhea your own child?
+- Have you really never heard anything about treating diarrhea in the last year?
+- Have you ever breastfed one of your children?
+- Are you currently breastfeeding your youngest child?
+- Yesterday, did your youngest child drink any fluids (besides water, ORS, or breast milk)?
+- Yesterday, did your youngest child eat any food?
+- At how many months did your youngest child first drink water/other liquids?
+- At how many months did your youngest child first taste any food?
+- If you give birth again, at how many months do you intend to give child food?
+- If you give birth again, at how many months do you think a baby should start eating?
+- If a baby under 6 months is too hot, how good/bad it is to give water?
+- Have you never really heard that breastfeeding is beneficial?
+- Have you ever heard of exclusive breastfeeding?
+- Do you understand what exclusive breastfeeding is?
+- Has no one really encouraged you to exclusively breastfeed your child in their first 6 months?
+- Have you never really heard anything about exclusive breastfeeding?
+- For your last pregnancy, who helped you to deliver?
+- For your last pregnancy, where did you deliver?
+- If you deliver again, where do you intend to deliver?
+- If you deliver again, who do you intend to have to help you?
+- Where do you think is the best place to deliver?
+- There is something called skilled birth attendant. Have you ever heard of it?
+- Do you understand what a skilled birth attendant is?
+- How many times have you had a skilled birth attendant at your delivery?
+- In the past, have you ever wanted to deliver in a health facility but not been able to?
+- Has no one really encouraged you to deliver in a health facility?
+- Have you ever had a very bad problem from delivery?
+- Have you never really heard anything about using a skilled birth attendant?
+- In 2012: if you own an insecticide-treated net, did you sleep under it last night?
+- In 2012: if your household owns an insecticide-treated net, did your youngest child sleep under it last night?
+- In 2012: were you assisted by someone (e.g., a doctor, nurse, midwife, SBA, or community health worker) during your last delivery?
+- In 2012: did you exclusively breastfeed your youngest child when they were younger than six months?
+- In 2012: did you give your child ORS or go to the clinic the last time they had diarrhea?
+- In 2012: if you have a handwashing station in your household, is there soap available to wash your hands?
+- In 2012: did you exclusively breastfeed your youngest child when they were younger than two years?
+
+# Target outcome questions:
+- In 2014: if your household owns an insecticide-treated net, did your youngest child sleep under it last night?
+- In 2016: if your household owns an insecticide-treated net, did your youngest child sleep under it last night?
+- In 2014: if you own an insecticide-treated net, did you sleep under it last night?
+- In 2016: if you own an insecticide-treated net, did you sleep under it last night?
+- In 2014: were you assisted by someone (e.g., a doctor, nurse, midwife, SBA, or community health worker) during your last delivery?
+- In 2016: were you assisted by someone (e.g., a doctor, nurse, midwife, SBA, or community health worker) during your last delivery?
+- In 2014: did you exclusively breastfeed your youngest child when they were younger than six months?
+- In 2016: did you exclusively breastfeed your youngest child when they were younger than six months?
+- In 2014: did you give your child ORS or go to the clinic the last time they had diarrhea?
+- In 2016: did you give your child ORS or go to the clinic the last time they had diarrhea?
+- In 2014: if you have a handwashing station in your household, is there soap available to wash your hands?
+- In 2016: if you have a handwashing station in your household, is there soap available to wash your hands?
+- In 2014: did you exclusively breastfeed your youngest child when they were younger than two years?
+- In 2016: did you exclusively breastfeed your youngest child when they were younger than two years?
+
+# Response format:
+Yes/No
+
+# Treatment arms:
+- CNC content, None
+- CNC content, Live drama shows by Center for National Culture
+- CNC content, Video by Center for National Culture
+- Community radio, No
+- Community radio, Yes
+- Mobile voice messages, None
+- Mobile voice messages, Always called by the same person
+- Mobile voice messages, Called by different people
+
+# Post-treatment framing appended to the system message:
+You were told you would be contacted in 2014 and again in 2016 to verify whether you had adopted the five health behaviors targeted by the initiative. Both follow-up surveys have now taken place.

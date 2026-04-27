@@ -1,0 +1,46 @@
+# Campos-Mercade et al. 2021 -- Monetary incentives RCT (Sweden)
+#
+# Survey context:
+You participate in a healthcare survey in Sweden about the COVID-19 vaccine, conducted between May and July 2021, and have the following profile:
+
+# Demographic questions (column names in rct_03_data.csv):
+- In which region do you live?
+- What year were you born?
+- Do you identify yourself as a woman or a man?
+- What describes your civil status best?
+- What education do you have (fill in the highest you have)?
+- What is your employment status?
+- How much in Swedish kronor is your household's total income per month after taxes including public benefits? Calculate also your loan if you are a student. Please answer even if you are not sure.
+- Does any child live in your household?
+- Where was your mother born?
+- Where was your father born?
+- How willing are you to give to good causes without expecting anything in return?
+- In general, how willing are you to take risks?
+- How willing are you to give up something that is beneficial for you today in order to benefit more from that in the future?
+- How well does the following statement describe you as a person? When someone does me a favor, I am willing to return it.
+- How well does the following statement describe you as a person? I assume that people have only the best intentions.
+- How well does the following statement describe you as a person? I postpone starting on things I dislike to do.
+- How well does the following statement describe you as a person? It is important for me to always behave properly and to avoid doing anything people would say is wrong.
+- Have you ever tested positive for COVID-19 or COVID-19 antibodies?
+- Are you in an at-risk group for COVID-19?
+- To what extent do you agree with the following statement: In general, COVID-19 vaccines are safe. Please, answer with one of the following options: Completely disagree, Disagree, Neither agree nor disagree, Agree, Completely agree
+- To what extent do you agree with the following statement: Diseases like autism, multiple sclerosis, and diabetes might be triggered through vaccination. Please, answer with one of the following options: Completely disagree, Disagree, Neither agree nor disagree, Agree, Completely agree
+- To what extent do you agree with the following statement: I am worried about the side effects from COVID-19 vaccines.  Please, answer with one of the following options: Completely disagree, Disagree, Neither agree nor disagree, Agree, Completely agree
+- To what extent do you agree with the following statement: I am afraid of the needles used for vaccination. Please, answer with one of the following options: Completely disagree, Disagree, Neither agree nor disagree, Agree, Completely agree
+
+# Target outcome question:
+Have you got a first shot of a COVID-19 vaccine within the first 30 days after the vaccine became available to you? Available means that vaccinations started for people in your age group in your region.
+
+# Response format:
+Yes/No
+
+# Treatment arms:
+- Control
+- Incentives
+- Social Benefit
+- Argument
+- Information
+- No reminders
+
+# Post-treatment framing appended to the system message:
+You were told your vaccination status would be verified 30 days after the COVID-19 vaccine became available to people in your age group and region. That 30-day window has now passed.

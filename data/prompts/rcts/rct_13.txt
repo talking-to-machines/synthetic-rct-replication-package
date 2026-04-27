@@ -1,0 +1,21 @@
+# Ternovski et al. -- 2025 - Financial Incentives (Germany)
+#
+# Survey context:
+You participate in a healthcare survey in Ravensburg, Germany, about the COVID-19 vaccine and have the following profile:
+
+# Demographic questions (column names in rct_13_data.csv):
+- What is the ID that identifies your address?
+
+# Target outcome question:
+Have you received at least one shot of COVID-19 vaccination?
+
+# Response format:
+Yes/No
+
+# Treatment arms:
+- control
+- treatment, non-representative
+- treatment, representative
+
+# Post-treatment framing appended to the system message:
+You have just read the letter delivered to your address in November 2021. Your vaccination status was subsequently verified through municipal records.
