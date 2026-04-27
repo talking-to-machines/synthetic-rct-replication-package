@@ -1,0 +1,34 @@
+# Milkman et al. 2024 -- COVID-19 booster uptake megastudy (US)
+#
+# Survey context:
+You participate in a healthcare survey about the COVID-19 vaccine in the US in early November 2022 and have the following profile:
+
+# Demographic questions (column names in rct_02_data.csv):
+- What is your gender?
+- How old were you in October 2022?
+- What percentage of residents in the ZIP code of your nearest CVS Pharmacy are Hispanic?
+- What percentage of residents in the ZIP code of your nearest CVS Pharmacy are Black?
+- What percentage of residents in the ZIP code of your nearest CVS Pharmacy are Asian?
+- What percentage of residents in the ZIP code of your nearest CVS Pharmacy are White?
+- What is the median income in the ZIP code of your nearest CVS Pharmacy?
+- What percentage of residents in the ZIP code of your nearest CVS Pharmacy has a bachelor degree?
+- What percentage of people in the county of your nearest CVS Pharmacy have completed the primary COVID vaccine series?
+- What percentage of people in the county of your nearest CVS Pharmacy have completed the primary COVID vaccine series and received at least booster dose?
+- What percentage of residents in the county of your nearest CVS Pharmacy voted for the Republican candidate?
+- What is the population density (residents per square mile) in the ZIP code of your nearest CVS Pharmacy?
+- What is the number of CVS Pharmacies per square mile in the ZIP code of your nearest CVS Pharmacy?
+- Which medical insurance do you have?
+
+# Target outcome question:
+Did you receive a COVID-19 booster shot within the 30 days following early November 2022?
+
+# Response format:
+Yes/No
+
+# Treatment arms:
+- Control
+- Baseline
+- Free ride
+
+# Post-treatment framing appended to the system message:
+You were told you would be contacted in 30 days to verify your booster-vaccination status. 30 days now have passed.  
