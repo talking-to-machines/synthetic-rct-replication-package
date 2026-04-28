@@ -1,4 +1,18 @@
+import random
+
 import pandas as pd
+
+
+def split_records(
+    records: list[dict],
+    test_fraction: float,
+    seed: int,
+) -> tuple[list[dict], list[dict]]:
+    """Deterministic random split of records into (train, test)."""
+    shuffled = list(records)
+    random.Random(seed).shuffle(shuffled)
+    n_test = int(round(len(shuffled) * test_fraction))
+    return shuffled[n_test:], shuffled[:n_test]
 
 
 def load_data(filepath: str) -> tuple[pd.DataFrame, dict]:

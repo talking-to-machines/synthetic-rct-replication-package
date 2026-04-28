@@ -1,6 +1,8 @@
 import json
 import pandas as pd
 
+from src.data.cleaning import load_data
+
 
 def generate_qna_format(
     profile_info: pd.Series,
@@ -171,3 +173,75 @@ def format_user_prompt(
         {"role": "assistant", "content": row[target_outcome]},
     ]
     return json.dumps(prompt)
+
+
+def build_finetune_source_records(
+    source_id: str, source_cfg: dict, kind: str
+) -> list[dict]:
+    """Build per-subject {"messages": [...]} records for one fine-tuning source.
+
+    Expects `source_cfg` to provide `data_file`, `prompt_file`, and `outcome`,
+    and the prompt JSON to provide `profile_vars`, `system_template`,
+    `user_template`. RCT prompt JSONs additionally provide `treatment`
+    (transcripts dict); when present, `{treatment}` in `system_template` is
+    filled from the row's `treatment_column`. Subjects with a missing outcome
+    are dropped.
+    """
+    data_file = source_cfg.get("data_file")
+    prompt_file = source_cfg.get("prompt_file")
+    outcome = source_cfg.get("outcome")
+    if not data_file or not prompt_file or not outcome:
+        raise ValueError(
+            f"{kind}/{source_id} is missing data_file, prompt_file, or outcome "
+            f"in config.yaml (got data_file={data_file!r}, "
+            f"prompt_file={prompt_file!r}, outcome={outcome!r})."
+        )
+
+    with open(prompt_file, "r", encoding="utf-8") as f:
+        prompt_cfg = json.load(f)
+    profile_vars = prompt_cfg["profile_vars"]
+    system_template = prompt_cfg["system_template"]
+    user_template = prompt_cfg["user_template"]
+    if kind == "rcts":
+        treatment_transcripts = prompt_cfg.get("treatment")
+        treatment_col = prompt_cfg.get("treatment_column", "treatment")
+    else:
+        treatment_transcripts = None
+
+    data, var_labels = load_data(data_file)
+
+    records: list[dict] = []
+    for _, row in data.iterrows():
+        outcome_val = row.get(outcome)
+        if pd.isnull(outcome_val) or str(outcome_val).strip() in ("", "NA", "N/A"):
+            continue
+        profile_prompt = generate_qna_format(row[profile_vars], var_labels=var_labels)
+        if treatment_transcripts is not None:
+            system_msg = system_template.format(
+                profile=profile_prompt,
+                treatment=treatment_transcripts[row[treatment_col]],
+            )
+        else:
+            system_msg = system_template.format(profile=profile_prompt)
+        records.append(
+            {
+                "messages": [
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": user_template},
+                    {"role": "assistant", "content": str(outcome_val).strip()},
+                ]
+            }
+        )
+    return records
+
+
+def format_instruction_messages(record: dict, system_prompt: str) -> list[dict]:
+    """Format an Alpaca-style instruction record as system/user/assistant messages."""
+    instruction = record["instruction"].strip()
+    input_text = record.get("input", "").strip()
+    user_content = f"{instruction}\n\n{input_text}" if input_text else instruction
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_content},
+        {"role": "assistant", "content": record["output"].strip()},
+    ]

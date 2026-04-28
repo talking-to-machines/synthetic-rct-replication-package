@@ -85,9 +85,6 @@ models:
     base_model: meta-llama/Llama-3.1-70B-Instruct
     family: llama
     type: open
-    training:                          # effective batch kept at 48
-      batch_size: 8
-      gradient_accumulation_steps: 6
     lora:                              # 70B benefits from MLP modules
       target_modules: [q_proj, k_proj, v_proj, o_proj,
                        gate_proj, up_proj, down_proj]
@@ -101,9 +98,6 @@ models:
     base_model: Qwen/Qwen3-70B
     family: qwen
     type: open
-    training:
-      batch_size: 8
-      gradient_accumulation_steps: 6
 
   # --- API model: inference-only, no fine-tuning ---
   gpt5:
@@ -196,6 +190,17 @@ rcts:
     prompt_file: data/prompts/rcts/duch_et_al_2023_prompt.json
 
 
+# Surveys (fine-tuning via training splits, evaluation via test splits).
+surveys:
+  survey_01:
+    outcome: "TBD"
+    data_file:
+    prompt_file:
+  survey_02:
+    outcome: "TBD"
+    data_file:
+    prompt_file:
+
 # ===========================================================================
 # Fine-tuning corpus composition
 # Which sources feed data/finetuning/train.jsonl. RCT contributions are
@@ -203,5 +208,7 @@ rcts:
 # Omit sources to exclude them from the fine-tuning corpus (useful for ablations).
 # ===========================================================================
 finetuning:
+  test_fraction: 0.2                  # per-source random holdout fraction
+  seed: 42                            # shuffle seed for the split
   surveys: [survey_01, survey_02]
   rcts: [rct_01, rct_02, rct_03, rct_04]
