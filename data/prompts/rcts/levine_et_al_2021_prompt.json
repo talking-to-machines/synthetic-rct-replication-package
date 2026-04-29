@@ -1,0 +1,32 @@
+{
+    "study": "levine_et_al_2021_GEVaP",
+    "profile_vars": [
+        "n_community",
+        "child_gender",
+        "child_birth_type",
+        "c_ant (any antenatal care)",
+        "child_birth_place",
+        "child_birth_time (for transport)",
+        "child_vacc_doc_yn (vaccine records booklet or paper record)",
+        "(067) How old were you at your last birthday?",
+        "(069) Have you ever attended school?",
+        "Mother's highest level of edu attended",
+        "(077) Does your household have electricity?",
+        "(078) Does your household have a color TV?",
+        "(079) Do you have your own cell/mobile phone? ",
+        "(080) Do you currently have access to a cell/mobile phone, either your own phone or a shared phone?",
+        "(081) Whose phone is it that you share with others or have access to?",
+        "(082) How strong is the network coverage at your household for the phone that you primarily use?",
+        "(083) Does the phone you primarily use have a 'mobile money' account registered to it?",
+        "(084) Is the phone you primarily use able to access the internet or use Wifi?",
+        "(085) How many SIM cards does the phone that you primarily use have which are currently operating?",
+        "Have you ever attempted to vaccinate the child but been unable to do so at the time?"
+    ],
+    "system_template": "You are a mother of a recently-born infant in a rural village in Karaga District, Northern Region, Ghana, with the following profile:\n{profile}\n\n{treatment}\n\nYour newborn is now four weeks (28 days) old.",
+    "user_template": "Please answer each of the following Yes/No questions about your newborn's vaccination status:\n(1) Has your newborn received BCG within the first 28 days of life?\n(2) Has your newborn received at least one dose of oral Polio (OPV0) within the first 14 days of life?\n\nGive your response in the following format: [Yes/No; Yes/No]",
+    "treatment": {
+        "Control": "",
+        "Reminder": "Shortly after your delivery, a Community Health Volunteer (CHV) from your community visited you, explained the Ghana Early Vaccination Program, and obtained your written informed consent. The CHV had received training in community health promotion from the Ghana Health Service, plus additional standardised training from the program team for this work. You provided a phone number where you could be reached - your own phone, a shared household phone, or the phone of someone close to you who could pass messages along. The CHV congratulated you on the birth, explained that newborns should receive BCG within 28 days of life and the first dose of oral Polio (OPV0) within 14 days of life, and gave you tailored information about exactly when and where vaccination services for your community are available - the specific dates, times and locations of the next community-outreach visit and the schedule of the nearest fixed clinic. Over the following weeks, up to three further attempts were made to reach you with this information. If your newborn had not yet received both early vaccines, the CHV continued to follow up with you periodically through the first 28 days of newborn life, with additional reminders about the importance of timely vaccination and the schedule of available services. You could ask to stop being contacted at any time, at no cost to you.",
+        "Incentive": "Shortly after your delivery, a Community Health Volunteer (CHV) from your community visited you, explained the Ghana Early Vaccination Program, and obtained your written informed consent. The CHV had received training in community health promotion from the Ghana Health Service, plus additional standardised training from the program team for this work. You provided a phone number where you could be reached - your own phone, a shared household phone, or the phone of someone close to you who could pass messages along. The CHV congratulated you on the birth, explained that newborns should receive BCG within 28 days of life and the first dose of oral Polio (OPV0) within 14 days of life, and gave you tailored information about exactly when and where vaccination services for your community are available - the specific dates, times and locations of the next community-outreach visit and the schedule of the nearest fixed clinic. The CHV also told you that you and she would each receive 1 Ghana cedi by mobile money for each of the two early vaccinations your newborn receives on time, for a maximum of 2 Ghana cedis to you and 2 Ghana cedis to the CHV, paid after the vaccination is verified by a photograph of your child's vaccination card. Over the following weeks, up to three further attempts were made to reach you with this information. If your newborn had not yet received both early vaccines, the CHV continued to follow up with you periodically through the first 28 days of newborn life, with additional reminders about the importance of timely vaccination and the schedule of available services. You could ask to stop being contacted at any time, at no cost to you."
+    }
+}
