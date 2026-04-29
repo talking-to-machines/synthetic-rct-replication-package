@@ -1,12 +1,10 @@
 import json
 import os
 import time
-
 import pandas as pd
 from openai import OpenAI
 from together import Together
 from tqdm import tqdm
-
 from src.utils.config import TOGETHER_API_KEY
 
 tqdm.pandas()
@@ -202,6 +200,14 @@ def inference_endpoint_query(
         prompts["llm_response"] = None
 
     def together_logit_query(row: pd.Series):
+        """Query Together AI for one prompt row and capture per-position logprobs.
+
+        Skips the API call when a prior `llm_response` is already present
+        (resume-from-checkpoint behaviour). Otherwise calls the chat
+        completions endpoint with logprobs enabled, serialises the response
+        text + per-position top-k logprobs to JSON, appends the row to the
+        progress CSV, and returns the JSON string.
+        """
         if not pd.isnull(row["llm_response"]):
             return row["llm_response"]
 
@@ -240,6 +246,7 @@ def inference_endpoint_query(
                 seen_tokens = set()
 
                 def _add(tok, lp):
+                    """Add a (token, logprob) entry, skipping nulls and case-insensitive dupes."""
                     if tok is None or lp is None:
                         return
                     key = tok.strip().lower()

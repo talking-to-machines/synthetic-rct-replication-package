@@ -3,15 +3,16 @@
 Generalises over any open-model entry in config.yaml (--model-key). Sources
 contributing to the corpus are listed in `finetuning.{surveys,rcts}`. For each
 source, this script reads its `data_file` and `prompt_file` from config.yaml,
-formats per-subject {"messages": [...]} records, randomly splits them into
-train/test using `finetuning.test_fraction` (and `finetuning.seed`), writes
-per-source JSONLs to `data/processed/{kind}/{id}/`, then concatenates the
-per-source training JSONLs into a single corpus before launching the job.
+formats per-subject {"messages": [...]} records, optionally splits them into
+train/test using `finetuning.test_fraction` (and `finetuning.seed`) -- with
+treatment-stratified sampling when the source has a treatment column --
+writes per-source files to `data/processed/{kind}/{id}/`, then concatenates
+the training records into a single JSONL corpus before launching the job.
 
 Reads:  config.yaml (training, lora, finetuning, {rcts,surveys} blocks)
         {source.data_file}, {source.prompt_file}
-Writes: data/processed/{kind}/{id}/{id}_train.jsonl
-        data/processed/{kind}/{id}/{id}_test.jsonl
+Writes: data/processed/{kind}/{id}/{id}_train.json
+        data/processed/{kind}/{id}/{id}_test.csv  (only when --train-test-split)
         data/finetuning/train.jsonl
         outputs/logs/training/{model_key}_ft_job.pkl
 
@@ -22,21 +23,32 @@ Config resolution order (most specific wins):
 
 import argparse
 import pickle
-from pathlib import Path
-
 import together
-
-from src.build_corpus import build_finetune_corpus
+from src.build_corpus import build_corpus
 from src.models.finetuning import (
     launch_finetune,
     poll_finetune_until_done,
-    resolve_train_params,
+    resolve_params,
 )
 from src.utils.config import TOGETHER_API_KEY
 from src.utils.io import load_yaml
+from pathlib import Path
 
 
 def main() -> None:
+    """CLI entry point for LoRA fine-tuning via Together AI.
+
+    Parses arguments, resolves the merged training/lora hyperparameters for
+    the chosen model, builds the combined fine-tuning corpus (with optional
+    per-source train/test split stratified by treatment), uploads the corpus
+    to Together AI, launches the fine-tuning job, persists job metadata to a
+    pickle for later resumption, and polls until the job reaches a terminal
+    state.
+
+    Raises:
+        RuntimeError: If the corpus is empty, or if the fine-tuning job
+            fails or is cancelled.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, default=Path("config.yaml"))
     parser.add_argument("--model-key", type=str, default="llama_8b")
@@ -46,19 +58,30 @@ def main() -> None:
         default=Path("data/finetuning/train.jsonl"),
         help="Combined corpus output path.",
     )
+    parser.add_argument(
+        "--train-test-split",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Hold out a per-source test set using `finetuning.test_fraction`. "
+            "Stratified by treatment when the source has a treatment column, "
+            "uniform random otherwise. Pass --no-train-test-split to use the "
+            "full data for training."
+        ),
+    )
     parser.add_argument("--job-pkl", type=Path, default=None)
     parser.add_argument("--poll-interval", type=int, default=60)
     args = parser.parse_args()
 
     cfg = load_yaml(args.config)
-    params = resolve_train_params(cfg, args.model_key)
+    params = resolve_params(cfg, args.model_key)
     job_pkl = args.job_pkl or Path(f"outputs/logs/training/{args.model_key}_ft_job.pkl")
 
     print(f"Model: {args.model_key} -> {params['base_model']}")
     print(f"Training: {params['training']}")
     print(f"LoRA: {params['lora']}")
 
-    n = build_finetune_corpus(cfg, args.output_jsonl)
+    n = build_corpus(cfg, args.output_jsonl, train_test_split=args.train_test_split)
     if n == 0:
         raise RuntimeError(
             f"No training examples produced. Check finetuning sources in {args.config}."

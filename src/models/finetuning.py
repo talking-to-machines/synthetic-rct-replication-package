@@ -1,19 +1,34 @@
 """Together AI fine-tuning helpers.
 
 Config resolution merges top-level training/lora defaults with per-model
-(and, for instruction tuning, per-dataset) overrides. The launch and poll
-helpers wrap Together AI's fine-tuning API so train.py and
-instruction_tuning.py can stay thin.
+overrides. The launch and poll helpers wrap Together AI's fine-tuning API
+so train.py can stay thin.
 """
 
 import time
-from pathlib import Path
-
 import together
 
 
-def resolve_train_params(cfg: dict, model_key: str) -> dict:
-    """Merge top-level and per-model training/lora overrides for fine-tuning."""
+def resolve_params(cfg: dict, model_key: str) -> dict:
+    """Merge top-level and per-model training/lora overrides for fine-tuning.
+
+    Looks up the model entry under `cfg["models"][model_key]`, validates it
+    is open-source (only open models can be fine-tuned via Together AI), and
+    returns the merged hyperparameter dict used by `launch_finetune`.
+
+    Args:
+        cfg: Parsed `config.yaml` dict (must contain `models`, `training`,
+            and `lora` blocks).
+        model_key: Key under `cfg["models"]` (e.g. `"llama_8b"`).
+
+    Returns:
+        Dict with `base_model` (str), `training` (dict), and `lora` (dict)
+        keys, ready to pass to `launch_finetune`.
+
+    Raises:
+        KeyError: If `model_key` is not registered under `cfg["models"]`.
+        ValueError: If the model is not declared as `type: open`.
+    """
     if model_key not in cfg["models"]:
         raise KeyError(
             f"Model {model_key!r} not in config.yaml. "
@@ -34,55 +49,25 @@ def resolve_train_params(cfg: dict, model_key: str) -> dict:
     }
 
 
-def resolve_instruction_tune_params(
-    cfg: dict, model_key: str, dataset_key: str
-) -> dict:
-    """Merge top-level, per-model, and per-dataset training/lora overrides."""
-    if model_key not in cfg["models"]:
-        raise KeyError(
-            f"Model {model_key!r} not in config.yaml. "
-            f"Known: {sorted(cfg['models'])}"
-        )
-    it_cfg = cfg.get("instruction_tuning", {})
-    datasets = it_cfg.get("datasets", {})
-    if dataset_key not in datasets:
-        raise KeyError(
-            f"Dataset {dataset_key!r} not in config.yaml instruction_tuning.datasets. "
-            f"Known: {sorted(datasets)}"
-        )
-
-    model_cfg = cfg["models"][model_key]
-    dataset_cfg = datasets[dataset_key]
-
-    training = {
-        **cfg["training"],
-        **model_cfg.get("training", {}),
-        **dataset_cfg.get("training", {}),
-    }
-    lora = {
-        **cfg["lora"],
-        **model_cfg.get("lora", {}),
-        **dataset_cfg.get("lora", {}),
-    }
-    return {
-        "base_model": model_cfg["base_model"],
-        "training": training,
-        "lora": lora,
-        "data_file": Path(dataset_cfg["data_file"]),
-        "output_jsonl": Path(dataset_cfg["output_jsonl"]),
-        "system_prompt": it_cfg.get(
-            "system_prompt", "You are a helpful assistant that follows instructions."
-        ),
-    }
-
-
 def launch_finetune(
     client: together.Together,
     file_id: str,
     params: dict,
     suffix: str,
 ) -> str:
-    """Launch a Together AI LoRA fine-tuning job and return the job id."""
+    """Launch a Together AI LoRA fine-tuning job.
+
+    Args:
+        client: Authenticated Together AI client.
+        file_id: ID of the previously uploaded training file (returned by
+            `client.files.upload`).
+        params: Hyperparameter dict from `resolve_params` containing
+            `base_model`, `training`, and `lora` sub-dicts.
+        suffix: Suffix appended to the resulting fine-tuned model name.
+
+    Returns:
+        The Together AI fine-tuning job id, used for polling and retrieval.
+    """
     training = params["training"]
     lora = params["lora"]
     modules_str = ",".join(lora["target_modules"])
@@ -115,7 +100,21 @@ def poll_finetune_until_done(
     job_id: str,
     poll_interval: int = 60,
 ) -> str | None:
-    """Poll a Together AI fine-tuning job until terminal. Returns the model name on success."""
+    """Block until a Together AI fine-tuning job reaches a terminal state.
+
+    Polls `client.fine_tuning.retrieve` every `poll_interval` seconds and
+    prints status transitions. Returns when the job has completed, failed,
+    or been cancelled.
+
+    Args:
+        client: Authenticated Together AI client.
+        job_id: Fine-tuning job id returned by `launch_finetune`.
+        poll_interval: Seconds to sleep between status checks.
+
+    Returns:
+        The fine-tuned model name (`status.model_output_name`) on success,
+        or None if the job failed or was cancelled.
+    """
     while True:
         status = client.fine_tuning.retrieve(id=job_id)
         status_str = str(status.status).upper()

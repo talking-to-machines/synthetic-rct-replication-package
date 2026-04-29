@@ -1,6 +1,5 @@
 import json
 import pandas as pd
-
 from src.data.cleaning import load_data
 
 
@@ -36,23 +35,6 @@ def generate_qna_format(
         counter += 1
 
     return survey_response
-
-
-def generate_profile_prompt(row: pd.Series, excluded_columns: list) -> str:
-    """Build a numbered interview-style prompt string from a row's profile columns.
-
-    Iterates over the row's columns (excluding those in `excluded_columns`), and
-    formats each non-null value as a numbered interviewer-respondent exchange.
-    """
-    profile_vars = [q for q in list(row.index) if q not in excluded_columns]
-    profile_prompt = ""
-    counter = 1
-    for question in profile_vars:
-        if pd.isnull(row[question]) or row[question] == "NA" or row[question] == "N/A":
-            continue
-        profile_prompt += f"{counter}) Interviewer: {question} Me: {row[question]} "
-        counter += 1
-    return profile_prompt
 
 
 def construct_system_message_with_treatment(
@@ -141,43 +123,9 @@ def generate_synthetic_experiment_prompts(
     return prompts
 
 
-def format_system_prompt(
-    row: pd.Series,
-    system_template: str,
-    treatment_transcripts: dict,
-) -> str:
-    """Render the system prompt for one RCT respondent.
-
-    Fills the `{profile}` and `{treatment}` placeholders in `system_template`
-    using the respondent's pre-built profile prompt and their assigned
-    treatment transcript.
-    """
-    return system_template.format(
-        profile=row["profile_prompt"],
-        treatment=treatment_transcripts[row["treatment"]],
-    )
-
-
-def format_user_prompt(
-    row: pd.Series,
-    user_template: str,
-    target_outcome: str,
-) -> str:
-    """Build the fine-tuning message sequence for a single respondent.
-
-    Returns a JSON string encoding a list of system/user/assistant messages.
-    """
-    prompt = [
-        {"role": "system", "content": row["system_prompt"]},
-        {"role": "user", "content": user_template},
-        {"role": "assistant", "content": row[target_outcome]},
-    ]
-    return json.dumps(prompt)
-
-
 def build_finetune_source_records(
     source_id: str, source_cfg: dict, kind: str
-) -> list[dict]:
+) -> tuple[list[dict], list[str] | None]:
     """Build per-subject {"messages": [...]} records for one fine-tuning source.
 
     Expects `source_cfg` to provide `data_file`, `prompt_file`, and `outcome`,
@@ -186,6 +134,10 @@ def build_finetune_source_records(
     (transcripts dict); when present, `{treatment}` in `system_template` is
     filled from the row's `treatment_column`. Subjects with a missing outcome
     are dropped.
+
+    Returns (records, treatments) where `treatments` is the list of treatment
+    labels parallel to `records` for sources that supply a treatment column,
+    and None otherwise. Callers use it to drive stratified splitting.
     """
     data_file = source_cfg.get("data_file")
     prompt_file = source_cfg.get("prompt_file")
@@ -207,20 +159,24 @@ def build_finetune_source_records(
         treatment_col = prompt_cfg.get("treatment_column", "treatment")
     else:
         treatment_transcripts = None
+        treatment_col = None
 
     data, var_labels = load_data(data_file)
 
     records: list[dict] = []
+    treatments: list[str] = []
     for _, row in data.iterrows():
         outcome_val = row.get(outcome)
         if pd.isnull(outcome_val) or str(outcome_val).strip() in ("", "NA", "N/A"):
             continue
         profile_prompt = generate_qna_format(row[profile_vars], var_labels=var_labels)
         if treatment_transcripts is not None:
+            treatment_label = row[treatment_col]
             system_msg = system_template.format(
                 profile=profile_prompt,
-                treatment=treatment_transcripts[row[treatment_col]],
+                treatment=treatment_transcripts[treatment_label],
             )
+            treatments.append(str(treatment_label))
         else:
             system_msg = system_template.format(profile=profile_prompt)
         records.append(
@@ -232,16 +188,5 @@ def build_finetune_source_records(
                 ]
             }
         )
-    return records
 
-
-def format_instruction_messages(record: dict, system_prompt: str) -> list[dict]:
-    """Format an Alpaca-style instruction record as system/user/assistant messages."""
-    instruction = record["instruction"].strip()
-    input_text = record.get("input", "").strip()
-    user_content = f"{instruction}\n\n{input_text}" if input_text else instruction
-    return [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_content},
-        {"role": "assistant", "content": record["output"].strip()},
-    ]
+    return records, (treatments if treatment_col is not None else None)

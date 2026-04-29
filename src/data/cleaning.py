@@ -1,18 +1,62 @@
 import random
-
 import pandas as pd
 
 
-def split_records(
-    records: list[dict],
+def split_indices(
+    n: int,
     test_fraction: float,
     seed: int,
-) -> tuple[list[dict], list[dict]]:
-    """Deterministic random split of records into (train, test)."""
-    shuffled = list(records)
-    random.Random(seed).shuffle(shuffled)
-    n_test = int(round(len(shuffled) * test_fraction))
-    return shuffled[n_test:], shuffled[:n_test]
+    strata: list[str] | None = None,
+) -> tuple[list[int], list[int]]:
+    """Deterministic split of `range(n)` into (train_idx, test_idx).
+
+    When `strata` is provided (length `n`), the split is stratified so the
+    fraction held out is approximately `test_fraction` within every stratum
+    (e.g. equal treatment-arm balance across train/test). Otherwise the
+    split is a uniform random shuffle.
+
+    Args:
+        n: Total number of items to split.
+        test_fraction: Fraction held out per stratum (or overall when
+            `strata` is None). Rounded to the nearest integer per bucket.
+        seed: Seed for the underlying `random.Random` for determinism.
+        strata: Optional per-item stratum labels driving stratified
+            sampling. Must have length `n` if provided.
+
+    Returns:
+        A `(train_idx, test_idx)` pair of disjoint index lists whose union
+        equals `range(n)`. Both lists are shuffled.
+
+    Raises:
+        ValueError: If `strata` is provided but its length does not match `n`.
+    """
+    rng = random.Random(seed)
+
+    if strata is None:
+        idx = list(range(n))
+        rng.shuffle(idx)
+        n_test = int(round(n * test_fraction))
+        return idx[n_test:], idx[:n_test]
+
+    if len(strata) != n:
+        raise ValueError(f"strata length {len(strata)} does not match n={n}.")
+
+    by_stratum: dict[str, list[int]] = {}
+    for i, stratum in enumerate(strata):
+        by_stratum.setdefault(stratum, []).append(i)
+
+    train_idx: list[int] = []
+    test_idx: list[int] = []
+    for stratum in sorted(by_stratum):
+        bucket = by_stratum[stratum]
+        rng.shuffle(bucket)
+        n_test = int(round(len(bucket) * test_fraction))
+        test_idx.extend(bucket[:n_test])
+        train_idx.extend(bucket[n_test:])
+
+    rng.shuffle(train_idx)
+    rng.shuffle(test_idx)
+    return train_idx, test_idx
 
 
 def load_data(filepath: str) -> tuple[pd.DataFrame, dict]:
@@ -45,55 +89,3 @@ def load_data(filepath: str) -> tuple[pd.DataFrame, dict]:
     var_labels = raw.iloc[0].to_dict()
     data = raw.iloc[1:].reset_index(drop=True)
     return data, var_labels
-
-
-def include_variable_names(
-    data_with_responses: pd.DataFrame, data_file_path: str
-) -> pd.DataFrame:
-    """Include variable names from the original data file into the provided DataFrame.
-
-    Reads the original data file to extract column headers, maps current
-    headers in the provided DataFrame back to the original headers, and
-    inserts the current headers as the first row.
-
-    Args:
-        data_with_responses (pd.DataFrame): DataFrame containing the data with responses.
-        data_file_path (str): Path to the original data file (CSV or XLSX) containing the headers.
-
-    Returns:
-        pd.DataFrame: DataFrame with original headers as columns and the current headers pushed to the first row.
-
-    Raises:
-        ValueError: If the provided file format is not supported (neither CSV nor XLSX).
-    """
-
-    def get_key_by_value(d, value):
-        for key, val in d.items():
-            if val == value:
-                return key
-        return value
-
-    if data_file_path.endswith(".csv"):
-        original_data_with_headers = pd.read_csv(data_file_path)
-    elif data_file_path.endswith(".xlsx"):
-        original_data_with_headers = pd.read_excel(data_file_path)
-    else:
-        raise ValueError("Unsupported file format. Please provide a CSV or XLSX file.")
-
-    col_name_mapping = original_data_with_headers.iloc[0].to_dict()
-
-    new_col_headers = []
-    for col in data_with_responses.columns:
-        new_col_headers.append(get_key_by_value(col_name_mapping, col))
-
-    headers_as_first_row = pd.DataFrame(
-        [data_with_responses.columns], columns=data_with_responses.columns
-    )
-
-    data_with_response_headers = pd.concat(
-        [headers_as_first_row, data_with_responses], ignore_index=True
-    )
-
-    data_with_response_headers.columns = new_col_headers
-
-    return data_with_response_headers

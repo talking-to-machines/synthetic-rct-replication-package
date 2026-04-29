@@ -16,11 +16,9 @@ import datetime
 import json
 import math
 import os
-
 import pandas as pd
 import yaml
 from openai import OpenAI
-
 from src.data.cleaning import load_data
 from src.data.formatting import generate_synthetic_experiment_prompts
 from src.models.api_client import (
@@ -38,6 +36,16 @@ def _parse_logit_response(json_str: str) -> pd.Series:
     (case-insensitive). If found, use that position's top-k to extract
     Yes/No logprobs. If neither appears anywhere in the sequence, fall back
     to position 0 (first token).
+
+    Args:
+        json_str: JSON string produced by `inference_endpoint_query`,
+            containing `response` and `per_position_logprobs` fields.
+
+    Returns:
+        Series with `llm_response_parsed`, `logprob_yes`, `logprob_no`,
+        `prob_yes`, `prob_no`. Probability/logprob fields are None when the
+        corresponding token did not appear in the position's top-k. On
+        parse failure, all fields are returned as empty/None.
     """
     try:
         parsed = json.loads(json_str)
@@ -102,8 +110,21 @@ def _parse_logit_response(json_str: str) -> pd.Series:
 def run_gpt_inference(request: dict) -> pd.DataFrame:
     """Run inference for GPT models via the OpenAI Batch API.
 
-    Expects `request` with keys: prompt_file, question, data_file_path,
-    experiment_round, version, model, scenario.
+    Builds per-subject prompts from the RCT data + prompt JSON, submits a
+    batch job, parses the responses (extracting Yes/No top-k logprobs for
+    supported studies), merges them back onto the source data, and writes
+    `data/synthetic/{experiment_round}_{version}.xlsx`.
+
+    Args:
+        request: Dict with keys: `prompt_file`, `question`, `data_file_path`,
+            `experiment_round`, `version`, `model`, `scenario`.
+
+    Returns:
+        The merged DataFrame containing the original data plus the model's
+        responses and (for supported studies) parsed logprob columns.
+
+    Raises:
+        ValueError: If the prompt JSON's `study` is not in the supported set.
     """
     client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -168,7 +189,20 @@ def run_gpt_inference(request: dict) -> pd.DataFrame:
 
 
 def _model_family_version_size(model_cfg: dict, model_key: str) -> tuple:
-    """Derive (model_family, model_version, model_size) for the codebook columns."""
+    """Derive `(family, version, size)` for the codebook output columns.
+
+    `family` comes from `model_cfg["family"]`, `size` is parsed out of
+    `model_key` (`"8b"`/`"70b"` substring), and `version` is looked up from
+    a small family→version map.
+
+    Args:
+        model_cfg: Per-model dict from `cfg["models"][model_key]`.
+        model_key: Key used to look up the model in config.
+
+    Returns:
+        Tuple `(family, version, size)`. Each element may be None when not
+        derivable from the available metadata.
+    """
     family = model_cfg.get("family", "")
     key_l = model_key.lower()
     if "70b" in key_l:
@@ -183,6 +217,21 @@ def _model_family_version_size(model_cfg: dict, model_key: str) -> tuple:
 
 
 def _renormalised_prob_yes(row: pd.Series) -> float | None:
+    """Renormalise P(Yes) over the {Yes, No} subspace from a parsed row.
+
+    Reads `prob_yes` and `prob_no` (already extracted from the model's
+    top-k logprobs) and returns `prob_yes / (prob_yes + prob_no)`. This
+    drops probability mass on tokens other than Yes/No so the result lives
+    on a binary support and is comparable across models with different
+    tokenisers.
+
+    Args:
+        row: DataFrame row carrying `prob_yes` and `prob_no` columns.
+
+    Returns:
+        The renormalised probability of "Yes", or None when either input is
+        missing or the denominator is non-positive.
+    """
     p_yes, p_no = row.get("prob_yes"), row.get("prob_no")
     if p_yes is None or p_no is None:
         return None
@@ -214,16 +263,12 @@ def run_togetherai_inference_codebook(
         model_key: Key under `models:` in config.yaml (e.g. "llama_8b_base").
         model_id: Together AI model identifier to query (e.g. the fine-tuned
             model name returned by the fine-tuning job).
-        condition: "instruct", "finetuned", or "instruction_tuned".
-            For "instruction_tuned", the per-dataset training/lora overrides
-            under config.yaml `instruction_tuning.datasets.{ft_corpus}` are
-            layered on top of the resolved training/lora config.
+        condition: "instruct" or "finetuned".
         data_file_path: Override for the RCT data CSV. Defaults to the
             `data_file` entry under the RCT config.
         output_csv: Override for the output CSV path.
-        ft_corpus: Label for the training corpus used to produce `model_id`
-            (e.g. "alpaca"). Populates the codebook's `ft_corpus` column.
-            Required when condition="instruction_tuned".
+        ft_corpus: Label for the training corpus used to produce `model_id`.
+            Populates the codebook's `ft_corpus` column.
     """
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
@@ -242,24 +287,6 @@ def run_togetherai_inference_codebook(
     training = {**cfg["training"], **model_cfg.get("training", {})}
     lora = {**cfg["lora"], **model_cfg.get("lora", {})}
     inference = {**cfg.get("inference", {}), **model_cfg.get("inference", {})}
-
-    # For instruction_tuned runs, layer the per-dataset training/lora
-    # overrides from config.yaml's instruction_tuning.datasets block on top.
-    if condition == "instruction_tuned":
-        if not ft_corpus:
-            raise ValueError(
-                "condition='instruction_tuned' requires --ft-corpus to identify "
-                "which instruction_tuning dataset produced the model."
-            )
-        datasets = cfg.get("instruction_tuning", {}).get("datasets", {})
-        if ft_corpus not in datasets:
-            raise KeyError(
-                f"ft_corpus {ft_corpus!r} not in config.yaml "
-                f"instruction_tuning.datasets. Known: {sorted(datasets)}"
-            )
-        dataset_cfg = datasets[ft_corpus]
-        training = {**training, **dataset_cfg.get("training", {})}
-        lora = {**lora, **dataset_cfg.get("lora", {})}
 
     with open(rct_cfg["prompt_file"]) as f:
         prompt_cfg = json.load(f)
@@ -306,7 +333,7 @@ def run_togetherai_inference_codebook(
 
     outcome_col = rct_cfg["outcome"]
     family, version, size = _model_family_version_size(model_cfg, model_key)
-    is_finetuned = condition in ("finetuned", "instruction_tuned")
+    is_finetuned = condition == "finetuned"
     target_modules = ",".join(lora.get("target_modules", [])) if is_finetuned else None
     effective_bs = (
         training["batch_size"] * training.get("gradient_accumulation_steps", 1)
@@ -393,6 +420,11 @@ def run_togetherai_inference_codebook(
 
 
 def main() -> None:
+    """CLI entry point for Together AI inference on an RCT holdout.
+
+    Parses arguments, dispatches to `run_togetherai_inference_codebook`,
+    which writes a CSV conforming to `data/synthetic/codebook_synthetic.csv`.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="config.yaml")
     parser.add_argument("--rct-id", required=True)
@@ -405,7 +437,7 @@ def main() -> None:
     parser.add_argument(
         "--condition",
         default="finetuned",
-        choices=["instruct", "finetuned", "instruction_tuned"],
+        choices=["instruct", "finetuned"],
     )
     parser.add_argument("--data-file", default=None)
     parser.add_argument("--output-csv", default=None)
@@ -413,10 +445,8 @@ def main() -> None:
         "--ft-corpus",
         default=None,
         help=(
-            "Training corpus label. For condition=instruction_tuned, must be a key "
-            "under config.yaml instruction_tuning.datasets (e.g. 'alpaca', "
-            "'alpagasus') -- its training/lora overrides are applied on top of "
-            "the model's config. Populates the ft_corpus output column."
+            "Training corpus label used to produce the fine-tuned model. "
+            "Populates the ft_corpus output column."
         ),
     )
     args = parser.parse_args()
