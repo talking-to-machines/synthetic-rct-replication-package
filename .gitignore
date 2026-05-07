@@ -4,3 +4,10 @@
 synthetic_rcts_file_tree.md
 archive/
 __pycache__/
+CLAUDE.md
+temp_*
+tmp_*
+data/human/
+data/old/
+compare_*
+.claude

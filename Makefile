@@ -11,7 +11,7 @@ all: data corpus train infer analysis
 # Reads:  data/human/
 # Writes: data/processed/
 data:
-	python -m src.preprocess --config config.yaml
+	Rscript preprocessing/main.R
 
 # Assemble the fine-tuning corpus from survey training files and RCT
 # training splits.
