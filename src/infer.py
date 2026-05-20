@@ -4,11 +4,10 @@ Reads:  data/processed/rcts/*/test.jsonl, data/prompts/rcts/
 Writes: data/synthetic/, outputs/logs/inference/
 
 Extracted from archived `synthetic_experiment_gpt.py` and
-`synthetic_experiment_togetherai.py`. Entry points preserved as
-`run_gpt_inference` and `run_togetherai_inference` for backwards
-compatibility with those scripts. `run_togetherai_inference_codebook`
-produces data/synthetic/ output conforming to
-data/synthetic/codebook_synthetic.csv.
+`synthetic_experiment_togetherai.py`. `run_gpt_inference` runs the
+OpenAI Batch path; `run_inference_codebook` runs Together AI or a
+HuggingFace dedicated endpoint (selected via `backend`) and produces
+data/synthetic/ output conforming to data/synthetic/codebook_synthetic.csv.
 """
 
 import argparse
@@ -142,8 +141,8 @@ def run_gpt_inference(request: dict) -> pd.DataFrame:
         prompt_cfg["system_template"],
         prompt_cfg["user_template"],
         prompt_cfg["treatment"],
-        id_column="SubjectID",
-        treatment_column="individual_treatment",
+        id_column="ID",
+        treatment_column="treatment",
         var_labels=var_labels,
     )
 
@@ -165,7 +164,7 @@ def run_gpt_inference(request: dict) -> pd.DataFrame:
     )
     llm_responses.rename(columns={"query_response": "llm_response"}, inplace=True)
 
-    id_col = "SubjectID"
+    id_col = "ID"
     prompts_with_responses = pd.merge(prompts, llm_responses, on="custom_id")
     data_with_responses = pd.merge(
         data, prompts_with_responses, on=id_col, suffixes=("", "_y")
@@ -192,8 +191,8 @@ def _model_family_version_size(model_cfg: dict, model_key: str) -> tuple:
     """Derive `(family, version, size)` for the codebook output columns.
 
     `family` comes from `model_cfg["family"]`, `size` is parsed out of
-    `model_key` (`"8b"`/`"70b"` substring), and `version` is looked up from
-    a small family→version map.
+    `model_key` (first `<digits>b` substring, case-insensitive), and
+    `version` is looked up from a small family→version map.
 
     Args:
         model_cfg: Per-model dict from `cfg["models"][model_key]`.
@@ -203,15 +202,12 @@ def _model_family_version_size(model_cfg: dict, model_key: str) -> tuple:
         Tuple `(family, version, size)`. Each element may be None when not
         derivable from the available metadata.
     """
+    import re
+
     family = model_cfg.get("family", "")
-    key_l = model_key.lower()
-    if "70b" in key_l:
-        size = "70B"
-    elif "8b" in key_l:
-        size = "8B"
-    else:
-        size = None
-    version_map = {"llama": "3.1", "qwen": "3", "gpt5": "5"}
+    size_match = re.search(r"(\d+)b", model_key.lower())
+    size = f"{size_match.group(1)}B" if size_match else None
+    version_map = {"llama": "3.1", "qwen": "3", "olmo2": "2", "gpt5": "5"}
     version = version_map.get(family)
     return family, version, size
 
@@ -241,17 +237,22 @@ def _renormalised_prob_yes(row: pd.Series) -> float | None:
     return p_yes / denom
 
 
-def run_togetherai_inference_codebook(
+def run_inference_codebook(
     config_path: str,
     rct_id: str,
     model_key: str,
     model_id: str,
+    backend: str = "together",
     condition: str = "finetuned",
     data_file_path: str | None = None,
     output_csv: str | None = None,
     ft_corpus: str | None = None,
 ) -> pd.DataFrame:
-    """Run Together AI inference on an RCT holdout; emit codebook-schema CSV.
+    """Run inference on an RCT holdout; emit codebook-schema CSV.
+
+    Backend is selected via `backend`: "together" hits Together AI (with
+    `model_id` as the Together model name), "huggingface" hits a HuggingFace
+    dedicated endpoint (with `model_id` as the endpoint base URL).
 
     Writes to `data/synthetic/{rct_id}_{model_key}_{condition}.csv` unless
     `output_csv` overrides. Columns follow
@@ -294,8 +295,8 @@ def run_togetherai_inference_codebook(
     data_path = data_file_path or rct_cfg["data_file"]
     data, var_labels = load_data(data_path)
 
-    id_col = "SubjectID"
-    treatment_col = "individual_treatment"
+    id_col = "ID"
+    treatment_col = "treatment"
 
     prompts = generate_synthetic_experiment_prompts(
         data,
@@ -311,14 +312,20 @@ def run_togetherai_inference_codebook(
     experiment_round = rct_id
     version_suffix = f"_{ft_corpus}" if ft_corpus and condition != "instruct" else ""
     experiment_version = f"{model_key}_{condition}{version_suffix}"
+    backend_to_model_name = {"together": "together_logit", "huggingface": "hf_logit"}
+    if backend not in backend_to_model_name:
+        raise ValueError(
+            f"Unknown backend {backend!r}. Expected one of {sorted(backend_to_model_name)}."
+        )
+
     prompts_with_responses = inference_endpoint_query(
         prompts=prompts,
         system_message_field="system_message",
         user_message_field="question_prompt",
         experiment_round=experiment_round,
         experiment_version=experiment_version,
-        model_name="together_logit",
-        together_model_id=model_id,
+        model_name=backend_to_model_name[backend],
+        model_id=model_id,
         temperature=inference.get("temperature", 1.0),
         max_tokens=inference.get("max_tokens", 1),
         logprobs_top_k=inference.get("logprobs_top_k", 5),
@@ -347,7 +354,7 @@ def run_togetherai_inference_codebook(
 
     out = pd.DataFrame(
         {
-            "subject_id": merged[id_col].astype(str),
+            "ID": merged[id_col].astype(str),
             "treatment": merged["treatment"],
             "outcome": merged[outcome_col],
             "prediction": merged["llm_response_parsed"],
@@ -420,19 +427,30 @@ def run_togetherai_inference_codebook(
 
 
 def main() -> None:
-    """CLI entry point for Together AI inference on an RCT holdout.
+    """CLI entry point for inference on an RCT holdout.
 
-    Parses arguments, dispatches to `run_togetherai_inference_codebook`,
-    which writes a CSV conforming to `data/synthetic/codebook_synthetic.csv`.
+    Backend is selected by which model-id flag is supplied:
+    `--together-model-id` for Together AI, or `--huggingface-model-id`
+    (the dedicated-endpoint base URL) for HuggingFace. Dispatches to
+    `run_inference_codebook`, which writes a CSV conforming to
+    `data/synthetic/codebook_synthetic.csv`.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="config.yaml")
     parser.add_argument("--rct-id", required=True)
     parser.add_argument("--model-key", required=True)
-    parser.add_argument(
-        "--model-id",
-        required=True,
+
+    backend_group = parser.add_mutually_exclusive_group(required=True)
+    backend_group.add_argument(
+        "--together-model-id",
+        default=None,
         help="Together AI model identifier (e.g. fine-tuned model name).",
+    )
+    backend_group.add_argument(
+        "--huggingface-model-id",
+        default=None,
+        help="Base URL of the HuggingFace dedicated endpoint "
+        "(e.g. https://<hash>.endpoints.huggingface.cloud).",
     )
     parser.add_argument(
         "--condition",
@@ -451,11 +469,19 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    run_togetherai_inference_codebook(
+    if args.together_model_id:
+        backend = "together"
+        model_id = args.together_model_id
+    else:
+        backend = "huggingface"
+        model_id = args.huggingface_model_id
+
+    run_inference_codebook(
         config_path=args.config,
         rct_id=args.rct_id,
         model_key=args.model_key,
-        model_id=args.model_id,
+        model_id=model_id,
+        backend=backend,
         condition=args.condition,
         data_file_path=args.data_file,
         output_csv=args.output_csv,

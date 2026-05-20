@@ -99,6 +99,16 @@ models:
     family: qwen
     type: open
 
+  olmo2_7b:
+    base_model: AllenAI/OLMo2-7B
+    family: olmo2
+    type: open
+
+  olmo2_32b:
+    base_model: AllenAI/OLMo2-32B
+    family: olmo2
+    type: open
+
   # --- API model: inference-only, no fine-tuning ---
   gpt5:
     api_model: "TBD"
@@ -147,8 +157,14 @@ rcts:
   duch_et_al_2023:
     outcome: "ActVacApril"
     treatments: ["CDC Health", "Placebo", "Low Cash", "High Cash"]
-    data_file: data/human/rcts/duch_et_al_2023/duch_et_al_2023_data.csv
+    data_file: data/processed/rcts/duch_et_al_2023/duch_et_al_2023_data.csv
     prompt_file: data/prompts/rcts/duch_et_al_2023_prompt.json
+
+  campos_mercade_et_al_2021:
+    outcome: "vaccinated"
+    treatments: ["CDC Health", "Placebo", "Low Cash", "High Cash"]
+    data_file: data/processed/rcts/campos_mercade_et_al_2021/campos_mercade_et_al_2021_data.csv
+    prompt_file: data/prompts/rcts/campos_mercade_et_al_2021_prompt.json
 
 
 # Surveys (fine-tuning via training splits, evaluation via test splits).

@@ -67,7 +67,7 @@ def generate_synthetic_experiment_prompts(
     system_template: str,
     user_template: str,
     treatment_transcripts: dict,
-    id_column: str = "SubjectID",
+    id_column: str = "ID",
     treatment_column: str = "individual_treatment",
     var_labels: dict | None = None,
 ) -> pd.DataFrame:

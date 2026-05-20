@@ -1,7 +1,7 @@
 {
   "study": "duch_et_al_2023",
   "profile_vars": [
-    "p_i_StartDate", "p_i_Q2.2", "p_i_Q2.3", "p_i_Q2.5", "p_i_Q2.4_1", "p_i_Q2.4_2",
+    "p_i_Q2.2", "p_i_Q2.3", "p_i_Q2.5", "p_i_Q2.4_1", "p_i_Q2.4_2",
     "Names of Community", "Village_Population", "clinic_distance", "p_i_Q141",
     "p_i_Q142", "p_i_Q143", "p_i_Q144", "p_i_Q145", "p_i_Q146", "p_i_Q91", "p_ii_Q28",
     "p_ii_Q30", "p_ii_Q4.1", "p_ii_Q2.6"

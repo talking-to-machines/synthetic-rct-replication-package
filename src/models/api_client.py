@@ -5,7 +5,7 @@ import pandas as pd
 from openai import OpenAI
 from together import Together
 from tqdm import tqdm
-from src.utils.config import TOGETHER_API_KEY
+from src.utils.config import HF_TOKEN, TOGETHER_API_KEY
 
 tqdm.pandas()
 
@@ -149,6 +149,42 @@ def batch_query(
     return pd.DataFrame(response_list)
 
 
+def _parse_openai_logprobs(logprobs_obj) -> list:
+    """Parse OpenAI chat-completion logprobs (used by HF TGI / OpenAI).
+
+    Returns the same per-position structure as the Together parser:
+    a list of {"sampled_token", "sampled_logprob", "top_logprobs"} dicts.
+    """
+    per_position = []
+    if not logprobs_obj or not getattr(logprobs_obj, "content", None):
+        return per_position
+    for tok in logprobs_obj.content:
+        entries = []
+        seen = set()
+
+        def _add(t, lp):
+            if t is None or lp is None:
+                return
+            key = t.strip().lower()
+            if key in seen:
+                return
+            seen.add(key)
+            entries.append({"token": t, "logprob": lp})
+
+        _add(tok.token, tok.logprob)
+        for alt in tok.top_logprobs or []:
+            _add(alt.token, alt.logprob)
+
+        per_position.append(
+            {
+                "sampled_token": tok.token,
+                "sampled_logprob": tok.logprob,
+                "top_logprobs": entries,
+            }
+        )
+    return per_position
+
+
 def inference_endpoint_query(
     prompts: pd.DataFrame,
     system_message_field: str,
@@ -156,13 +192,13 @@ def inference_endpoint_query(
     experiment_round: str,
     experiment_version: str,
     model_name: str,
-    together_model_id: str,
+    model_id: str,
     temperature: float = 1.0,
     max_tokens: int = 1,
     logprobs_top_k: int = 5,
 ) -> pd.DataFrame:
     """
-    Query a dedicated inference endpoint (Together AI) and return the responses.
+    Query a dedicated inference endpoint (Together AI or HuggingFace).
 
     Saves per-row progress to resume interrupted runs.
 
@@ -172,12 +208,13 @@ def inference_endpoint_query(
         user_message_field (str): The column name indicating the user message.
         experiment_round (str): The round of the experiment.
         experiment_version (str): The experiment/model version.
-        model_name (str): The name of the LLM backend ("together_logit").
-        together_model_id (str): Together AI model id to query.
-        temperature: Sampling temperature passed to Together's chat API.
+        model_name (str): Backend identifier — "together_logit" or "hf_logit".
+        model_id (str): For "together_logit", the Together model name. For
+            "hf_logit", the base URL of the HuggingFace dedicated endpoint
+            (TGI ignores the `model` field).
+        temperature: Sampling temperature.
         max_tokens: Maximum tokens generated per query.
-        logprobs_top_k: `logprobs` value passed to Together; top-k logprobs
-            returned at each generated token position.
+        logprobs_top_k: Number of top-k logprobs returned at each position.
 
     Returns:
         pd.DataFrame: The prompts with the corresponding LLM responses.
@@ -190,24 +227,28 @@ def inference_endpoint_query(
 
     os.makedirs(progress_dir, exist_ok=True)
 
+    prompts["ID"] = prompts["ID"].astype(str)
     if os.path.exists(progress_file):
         processed_prompts = pd.read_csv(progress_file)
-        processed_prompts["SubjectID"] = processed_prompts["SubjectID"].astype("int64")
+        processed_prompts["ID"] = processed_prompts["ID"].astype(str)
         prompts = prompts.merge(
-            processed_prompts[["SubjectID", "llm_response"]], on="SubjectID", how="left"
+            processed_prompts[["ID", "llm_response"]], on="ID", how="left"
         )
     else:
         prompts["llm_response"] = None
 
-    def together_logit_query(row: pd.Series):
-        """Query Together AI for one prompt row and capture per-position logprobs.
+    def _save_progress(row: pd.Series, result: str) -> str:
+        row["llm_response"] = result
+        row.to_frame().T.to_csv(
+            progress_file,
+            mode="a",
+            header=not os.path.exists(progress_file),
+            index=False,
+        )
+        return result
 
-        Skips the API call when a prior `llm_response` is already present
-        (resume-from-checkpoint behaviour). Otherwise calls the chat
-        completions endpoint with logprobs enabled, serialises the response
-        text + per-position top-k logprobs to JSON, appends the row to the
-        progress CSV, and returns the JSON string.
-        """
+    def together_logit_query(row: pd.Series):
+        """Query Together AI for one prompt row and capture per-position logprobs."""
         if not pd.isnull(row["llm_response"]):
             return row["llm_response"]
 
@@ -217,7 +258,7 @@ def inference_endpoint_query(
         ]
 
         create_kwargs = {
-            "model": together_model_id,
+            "model": model_id,
             "messages": messages,
             "stream": False,
             "logprobs": logprobs_top_k,
@@ -246,7 +287,6 @@ def inference_endpoint_query(
                 seen_tokens = set()
 
                 def _add(tok, lp):
-                    """Add a (token, logprob) entry, skipping nulls and case-insensitive dupes."""
                     if tok is None or lp is None:
                         return
                     key = tok.strip().lower()
@@ -280,21 +320,55 @@ def inference_endpoint_query(
                 "per_position_logprobs": per_position_logprobs,
             }
         )
+        return _save_progress(row, result)
 
-        row["llm_response"] = result
+    def hf_logit_query(row: pd.Series):
+        """Query a HuggingFace dedicated endpoint (OpenAI-compatible TGI)."""
+        if not pd.isnull(row["llm_response"]):
+            return row["llm_response"]
 
-        row.to_frame().T.to_csv(
-            progress_file,
-            mode="a",
-            header=not os.path.exists(progress_file),
-            index=False,
+        messages = [
+            {"role": "system", "content": row[system_message_field]},
+            {"role": "user", "content": row[user_message_field]},
+        ]
+
+        create_kwargs = {
+            "model": hf_served_model,
+            "messages": messages,
+            "temperature": temperature,
+            "logprobs": True,
+            "top_logprobs": logprobs_top_k,
+        }
+        if max_tokens is not None:
+            create_kwargs["max_tokens"] = max_tokens
+        response = client.chat.completions.create(**create_kwargs)
+
+        choice = response.choices[0]
+        per_position_logprobs = _parse_openai_logprobs(choice.logprobs)
+        result = json.dumps(
+            {
+                "response": choice.message.content,
+                "per_position_logprobs": per_position_logprobs,
+            }
         )
-
-        return result
+        return _save_progress(row, result)
 
     if model_name == "together_logit":
         client = Together(api_key=TOGETHER_API_KEY)
         prompts["llm_response"] = prompts.progress_apply(together_logit_query, axis=1)
+    elif model_name == "hf_logit":
+        client = OpenAI(
+            base_url=model_id.rstrip("/") + "/v1",
+            api_key=HF_TOKEN,
+        )
+        models_listed = client.models.list().data
+        if not models_listed:
+            raise RuntimeError(
+                f"Endpoint {model_id} returned no models at /v1/models. "
+                "Check the endpoint is running and HF_TOKEN is valid."
+            )
+        hf_served_model = models_listed[0].id
+        prompts["llm_response"] = prompts.progress_apply(hf_logit_query, axis=1)
     else:
         raise ValueError(f"Model {model_name} is not supported.")
 
