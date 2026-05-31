@@ -22,8 +22,7 @@ def write_jsonl(records: list[dict], path: str | Path) -> None:
     """Write an iterable of dict records to a JSONL file.
 
     Each record is serialised on its own line via `json.dumps`. Parent
-    directories are created if they do not exist. Suitable for the combined
-    fine-tuning corpus uploaded to Together AI.
+    directories are created if they do not exist.
 
     Args:
         records: Records to serialise (one JSON object per line).

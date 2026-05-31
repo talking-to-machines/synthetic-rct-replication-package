@@ -1,22 +1,9 @@
-# ===========================================================================
-# Configuration: artificially-intelligent-rct
-#
-# Centralised source for hyperparameters, model specifications, training,
-# and inference protocols.
-#
-# Pattern: defaults + overrides. Top-level `training`, `lora`, `inference`,
-# and `split` blocks provide defaults. Any model or RCT entry may override
-# any field by specifying it under its own block. Overrides are merged
-# field-by-field (src/utils/config.py).
-# ===========================================================================
-
-
 # ---------------------------------------------------------------------------
-# Training defaults (LoRA fine-tuning)
+# Training defaults (LoRA fine-tuning, run on SageMaker)
 # ---------------------------------------------------------------------------
 training:
-  epochs: 6
-  batch_size: 8                       # per-device
+  epochs: 1
+  batch_size: 8                       # per-device (single-GPU instances)
   gradient_accumulation_steps: 1
   learning_rate: 2.0e-4
   weight_decay: 0.01
@@ -26,7 +13,7 @@ training:
   precision: bf16
   max_seq_length: 2048
   max_grad_norm: 1.0
-  seeds: [42, 43, 44]
+  seeds: [42]
   n_checkpoints: 1
   n_evals: 0
   train_on_inputs: auto
@@ -43,7 +30,7 @@ lora:
 
 
 # ---------------------------------------------------------------------------
-# Inference defaults (open-source models only)
+# Inference defaults (SageMaker-hosted open-source models).
 # API models specify their inference parameters inside their own model block.
 # ---------------------------------------------------------------------------
 inference:
@@ -52,8 +39,25 @@ inference:
   batch_size: 32
   max_seq_length: 2048
   temperature: 1.0
-  max_tokens: 512                    # Together AI's default for chat completions
+  max_tokens: 512                         # binary Yes/No logit pass: only need first-token logprobs
   logprobs_top_k: 5
+
+
+# ---------------------------------------------------------------------------
+# SageMaker defaults (training jobs + real-time inference endpoints).
+# AWS credentials, the execution role ARN, and the Hub username under which
+# fine-tuned models are pushed are read from environment (AWS_ACCESS_KEY_ID /
+# AWS_SECRET_ACCESS_KEY / AWS_DEFAULT_REGION / SM_ROLE_ARN / HF_USERNAME via
+# src/utils/config.py) -- only non-secret runtime knobs live here.
+# ---------------------------------------------------------------------------
+sagemaker:
+  # Pinned training DLC (HF PyTorch GPU). Bump in lockstep with the SDK.
+  training_image_uri:
+    "763104351884.dkr.ecr.{region}.amazonaws.com/huggingface-pytorch-training:2.9.0-transformers5.3.0-gpu-py312-cu130-ubuntu22.04"
+  training_py_version: py312
+  max_run_seconds: 36000              # 10h training cap
+  s3_prefix: synthetic-rct            # under sagemaker default bucket
+  endpoint_startup_timeout: 900       # 15m TGI cold-start budget
 
 
 # ---------------------------------------------------------------------------
@@ -67,6 +71,15 @@ split:
 
 # ===========================================================================
 # Models
+#
+# `base_model` is the model's repo on the Hugging Face Hub. SageMaker uses
+# it both as the starting point for LoRA fine-tuning and (for the `instruct`
+# condition) as the HF_MODEL_ID the TGI container pulls at endpoint start.
+#
+# `training_instance_type` / `inference_instance_type` pick the SageMaker
+# instance for fine-tuning and for the served endpoint respectively. Sized
+# per model so 8B variants run on ~24GB GPUs while 70B variants get
+# multi-GPU boxes.
 # ===========================================================================
 models:
 
@@ -75,16 +88,29 @@ models:
     base_model: meta-llama/Llama-3.1-8B-Instruct
     family: llama
     type: open
+    training_instance_type: ml.g6e.2xlarge   # 1x L40S 48GB
+    inference_instance_type: ml.g5.2xlarge   # 1x A10G 24GB
+    inference_num_shard: 1
 
   llama_8b_base:
-    base_model: meta-llama/Meta-Llama-3.1-8B-Reference
+    base_model: meta-llama/Llama-3.1-8B
     family: llama
     type: open
+    training_instance_type: ml.g6e.2xlarge
+    inference_instance_type: ml.g5.2xlarge
+    inference_num_shard: 1
 
   llama_70b:
     base_model: meta-llama/Llama-3.1-70B-Instruct
     family: llama
     type: open
+    training_instance_type: ml.p4d.24xlarge  # 8x A100 40GB
+    inference_instance_type: ml.g5.48xlarge  # 8x A10G 24GB
+    inference_num_shard: 8                   # tensor-parallel across all 8 A10G
+    training:
+      batch_size: 1                    # 8 GPUs * 1 per-device * 1 accum = effective 8
+      fsdp: true                       # 70B weights (140GB) don't fit per-GPU; shard via FSDP
+      gradient_checkpointing: true     # required for activations to fit alongside FSDP shard
     lora:                              # 70B benefits from MLP modules
       target_modules: [q_proj, k_proj, v_proj, o_proj,
                        gate_proj, up_proj, down_proj]
@@ -93,23 +119,43 @@ models:
     base_model: Qwen/Qwen3-8B
     family: qwen
     type: open
+    training_instance_type: ml.g6e.2xlarge
+    inference_instance_type: ml.g5.2xlarge
+    inference_num_shard: 1
 
   qwen_70b:
     base_model: Qwen/Qwen3-70B
     family: qwen
     type: open
+    training_instance_type: ml.p4d.24xlarge
+    inference_instance_type: ml.g5.48xlarge
+    inference_num_shard: 8                   # tensor-parallel across all 8 A10G
+    training:
+      batch_size: 1                    # 8 GPUs * 1 per-device * 1 accum = effective 8
+      fsdp: true                       # 70B weights don't fit per-GPU; shard via FSDP
+      gradient_checkpointing: true     # required for activations to fit alongside FSDP shard
 
   olmo2_7b:
-    base_model: AllenAI/OLMo2-7B
+    base_model: allenai/OLMo-2-1124-7B-Instruct
     family: olmo2
     type: open
+    training_instance_type: ml.g6e.2xlarge
+    inference_instance_type: ml.g5.2xlarge
+    inference_num_shard: 1
 
   olmo2_32b:
-    base_model: AllenAI/OLMo2-32B
+    base_model: allenai/OLMo-2-0325-32B-Instruct
     family: olmo2
     type: open
+    training_instance_type: ml.g6e.12xlarge  # 4x L40S 48GB
+    inference_instance_type: ml.g5.48xlarge  # 8x A10G 24GB; 8-way TP shards weights to ~8GB/GPU
+    inference_num_shard: 8                   # tensor-parallel across all 8 A10G
+    training:
+      batch_size: 2                    # 4 GPUs * 2 per-device * 1 accum = effective 8
+      fsdp: true                       # 32B weights (64GB) don't fit per-GPU; shard via FSDP
+      gradient_checkpointing: true     # required for activations to fit alongside FSDP shard
 
-  # --- API model: inference-only, no fine-tuning ---
+  # --- API model: inference-only, no fine-tuning, no SageMaker. ---
   gpt5:
     api_model: "TBD"
     type: api
@@ -157,9 +203,13 @@ rcts:
   duch_et_al_2023:
     outcome: "ActVacApril"
     treatments: ["CDC Health", "Placebo", "Low Cash", "High Cash"]
-    data_file: data/processed/rcts/duch_et_al_2023/duch_et_al_2023_data.csv
+    data_file: data/processed/rcts/duch_et_al_2023/duch_et_al_2023_holdout_1537.csv
     prompt_file: data/prompts/rcts/duch_et_al_2023_prompt.json
-
+  duch_et_al_2023_train:
+    outcome: "ActVacApril"
+    treatments: ["CDC Health", "Placebo", "Low Cash", "High Cash"]
+    data_file: data/processed/rcts/duch_et_al_2023/duch_et_al_2023_training_1538.csv
+    prompt_file: data/prompts/rcts/duch_et_al_2023_prompt.json
   campos_mercade_et_al_2021:
     outcome: "vaccinated"
     treatments: ["CDC Health", "Placebo", "Low Cash", "High Cash"]
@@ -185,7 +235,9 @@ surveys:
 # Omit sources to exclude them from the fine-tuning corpus (useful for ablations).
 # ===========================================================================
 finetuning:
-  test_fraction: 0.2                  # per-source random holdout fraction
+  # test_fraction: 0.2                  # per-source random holdout fraction
   seed: 42                            # shuffle seed for the split
-  surveys: [survey_01, survey_02]
-  rcts: [rct_01, rct_02, rct_03, rct_04]
+  # surveys: [survey_01, survey_02]
+  # rcts: [rct_01, rct_02, rct_03, rct_04]
+  test_fraction: 0.0
+  rcts: [duch_et_al_2023_train]

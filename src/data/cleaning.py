@@ -62,22 +62,21 @@ def split_indices(
 def load_data(filepath: str) -> tuple[pd.DataFrame, dict]:
     """Load an RCT data file with a two-row header.
 
-    Convention:
+    File layout:
         Row 0: short variable codes (used as DataFrame column names).
         Row 1: long-form survey questions/labels.
         Row 2+: subject responses.
 
-    Short codes match `profile_vars`/`outcome` in config.yaml and the prompt
-    JSON; the long-form labels are returned alongside so that downstream
-    prompt generation can substitute the human-readable question text into
-    the rendered system message.
-
-    Parameters:
+    Args:
         filepath: Path to a `.csv` or `.xlsx` file following the convention above.
 
     Returns:
-        data: DataFrame with short-code columns and only data rows.
-        var_labels: Mapping from short code -> long-form label.
+        Tuple `(data, var_labels)` where `data` is the subject-response
+        DataFrame keyed by short variable codes, and `var_labels` maps each
+        short code to its long-form label.
+
+    Raises:
+        ValueError: If `filepath` does not end in `.csv` or `.xlsx`.
     """
     if filepath.endswith(".csv"):
         raw = pd.read_csv(filepath, header=0)

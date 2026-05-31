@@ -1,13 +1,10 @@
 """Inference for all model x condition x RCT combinations.
 
-Reads:  data/processed/rcts/*/test.jsonl, data/prompts/rcts/
-Writes: data/synthetic/, outputs/logs/inference/
-
-Extracted from archived `synthetic_experiment_gpt.py` and
-`synthetic_experiment_togetherai.py`. `run_gpt_inference` runs the
-OpenAI Batch path; `run_inference_codebook` runs Together AI or a
-HuggingFace dedicated endpoint (selected via `backend`) and produces
-data/synthetic/ output conforming to data/synthetic/codebook_synthetic.csv.
+`run_gpt_inference` runs the OpenAI Batch path for GPT-family models.
+`run_inference_codebook` auto-deploys a SageMaker TGI endpoint for the
+HF Hub repo id supplied via `--huggingface-model-id`, runs the per-prompt
+logit pass, tears the endpoint down, and writes a CSV conforming to
+`data/synthetic/codebook_synthetic.csv`.
 """
 
 import argparse
@@ -23,6 +20,8 @@ from src.data.formatting import generate_synthetic_experiment_prompts
 from src.models.api_client import (
     batch_query,
     create_batch_file,
+    delete_sagemaker_endpoint,
+    deploy_sagemaker_endpoint,
     inference_endpoint_query,
 )
 from src.utils.config import OPENAI_API_KEY
@@ -241,35 +240,34 @@ def run_inference_codebook(
     config_path: str,
     rct_id: str,
     model_key: str,
-    model_id: str,
-    backend: str = "together",
+    huggingface_model_id: str,
     condition: str = "finetuned",
     data_file_path: str | None = None,
     output_csv: str | None = None,
     ft_corpus: str | None = None,
 ) -> pd.DataFrame:
-    """Run inference on an RCT holdout; emit codebook-schema CSV.
+    """Run inference on an RCT holdout via a SageMaker TGI endpoint.
 
-    Backend is selected via `backend`: "together" hits Together AI (with
-    `model_id` as the Together model name), "huggingface" hits a HuggingFace
-    dedicated endpoint (with `model_id` as the endpoint base URL).
-
-    Writes to `data/synthetic/{rct_id}_{model_key}_{condition}.csv` unless
-    `output_csv` overrides. Columns follow
-    `data/synthetic/codebook_synthetic.csv`.
+    Deploys `huggingface_model_id` (a Hugging Face Hub repo id, typically a
+    fine-tuned checkpoint or the model's instruct base) on a SageMaker
+    real-time endpoint sized by the model's `inference_instance_type`,
+    invokes the endpoint per prompt with a logit pass, and tears the
+    endpoint down on exit. Writes
+    `data/synthetic/{rct_id}_{model_key}_{condition}.csv` unless
+    `output_csv` overrides. Columns follow `data/synthetic/codebook_synthetic.csv`.
 
     Args:
         config_path: Path to config.yaml.
         rct_id: Key under `rcts:` in config.yaml (e.g. "duch_et_al_2023").
         model_key: Key under `models:` in config.yaml (e.g. "llama_8b_base").
-        model_id: Together AI model identifier to query (e.g. the fine-tuned
-            model name returned by the fine-tuning job).
+        huggingface_model_id: Hugging Face Hub repo id to serve via TGI
+            (e.g. "iamraymondlow/llama-31-8b-instruct-finetuned-duch").
         condition: "instruct" or "finetuned".
         data_file_path: Override for the RCT data CSV. Defaults to the
             `data_file` entry under the RCT config.
         output_csv: Override for the output CSV path.
-        ft_corpus: Label for the training corpus used to produce `model_id`.
-            Populates the codebook's `ft_corpus` column.
+        ft_corpus: Label for the training corpus used to produce
+            `huggingface_model_id`. Populates the codebook's `ft_corpus` column.
     """
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
@@ -288,6 +286,13 @@ def run_inference_codebook(
     training = {**cfg["training"], **model_cfg.get("training", {})}
     lora = {**cfg["lora"], **model_cfg.get("lora", {})}
     inference = {**cfg.get("inference", {}), **model_cfg.get("inference", {})}
+    sm_cfg = cfg.get("sagemaker", {})
+
+    instance_type = model_cfg.get("inference_instance_type")
+    if not instance_type:
+        raise KeyError(
+            f"Model {model_key!r} is missing `inference_instance_type` in config.yaml."
+        )
 
     with open(rct_cfg["prompt_file"]) as f:
         prompt_cfg = json.load(f)
@@ -312,24 +317,36 @@ def run_inference_codebook(
     experiment_round = rct_id
     version_suffix = f"_{ft_corpus}" if ft_corpus and condition != "instruct" else ""
     experiment_version = f"{model_key}_{condition}{version_suffix}"
-    backend_to_model_name = {"together": "together_logit", "huggingface": "hf_logit"}
-    if backend not in backend_to_model_name:
-        raise ValueError(
-            f"Unknown backend {backend!r}. Expected one of {sorted(backend_to_model_name)}."
-        )
 
-    prompts_with_responses = inference_endpoint_query(
-        prompts=prompts,
-        system_message_field="system_message",
-        user_message_field="question_prompt",
-        experiment_round=experiment_round,
-        experiment_version=experiment_version,
-        model_name=backend_to_model_name[backend],
-        model_id=model_id,
-        temperature=inference.get("temperature", 1.0),
-        max_tokens=inference.get("max_tokens", 1),
-        logprobs_top_k=inference.get("logprobs_top_k", 5),
+    # Stable across resumed runs since the progress CSV is keyed on the same slug.
+    endpoint_name = experiment_version.lower().replace("_", "-").replace(".", "")[:63]
+
+    predictor, endpoint_name = deploy_sagemaker_endpoint(
+        huggingface_model_id=huggingface_model_id,
+        endpoint_name=endpoint_name,
+        instance_type=instance_type,
+        max_input_tokens=inference.get("max_seq_length", 2048),
+        max_total_tokens=inference.get("max_seq_length", 2048) * 2,
+        dtype=("bfloat16" if inference.get("precision") == "bf16" else "float16"),
+        startup_timeout=sm_cfg.get("endpoint_startup_timeout", 900),
+        num_shard=model_cfg.get("inference_num_shard"),
     )
+
+    try:
+        prompts_with_responses = inference_endpoint_query(
+            prompts=prompts,
+            system_message_field="system_message",
+            user_message_field="question_prompt",
+            experiment_round=experiment_round,
+            experiment_version=experiment_version,
+            endpoint_name=endpoint_name,
+            temperature=inference.get("temperature", 1.0),
+            max_tokens=inference.get("max_tokens", 1),
+            logprobs_top_k=inference.get("logprobs_top_k", 5),
+        )
+    finally:
+        # Stop the per-second meter even if inference raised mid-loop.
+        delete_sagemaker_endpoint(predictor=predictor)
 
     data[id_col] = data[id_col].astype(str)
     prompts_with_responses[id_col] = prompts_with_responses[id_col].astype(str)
@@ -366,7 +383,7 @@ def run_inference_codebook(
             "model_family": family,
             "model_version": version,
             "model_size": size,
-            "model_id": model_id,
+            "model_id": huggingface_model_id,
             "fine_tuned": is_finetuned,
             "ft_base_model": ft_base_model,
             "ft_corpus": ft_corpus_value,
@@ -406,6 +423,15 @@ def run_inference_codebook(
             "train_on_inputs": (
                 training.get("train_on_inputs") if is_finetuned else None
             ),
+            "train_fsdp": (bool(training.get("fsdp", False)) if is_finetuned else None),
+            "train_gradient_checkpointing": (
+                bool(training.get("gradient_checkpointing", False))
+                if is_finetuned
+                else None
+            ),
+            "train_instance_type": (
+                model_cfg.get("training_instance_type") if is_finetuned else None
+            ),
             "infer_precision": inference.get("precision"),
             "infer_batch_size": inference.get("batch_size"),
             "infer_max_seq_length": inference.get("max_seq_length"),
@@ -413,6 +439,8 @@ def run_inference_codebook(
             "infer_max_tokens": inference.get("max_tokens"),
             "infer_logprobs_top_k": inference.get("logprobs_top_k"),
             "infer_target_tokens": ",".join(inference.get("target_tokens", [])) or None,
+            "infer_instance_type": instance_type,
+            "infer_num_shard": model_cfg.get("inference_num_shard"),
         }
     )
 
@@ -427,61 +455,33 @@ def run_inference_codebook(
 
 
 def main() -> None:
-    """CLI entry point for inference on an RCT holdout.
-
-    Backend is selected by which model-id flag is supplied:
-    `--together-model-id` for Together AI, or `--huggingface-model-id`
-    (the dedicated-endpoint base URL) for HuggingFace. Dispatches to
-    `run_inference_codebook`, which writes a CSV conforming to
-    `data/synthetic/codebook_synthetic.csv`.
-    """
+    """CLI entry point: dispatch to `run_inference_codebook`."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="config.yaml")
     parser.add_argument("--rct-id", required=True)
     parser.add_argument("--model-key", required=True)
-
-    backend_group = parser.add_mutually_exclusive_group(required=True)
-    backend_group.add_argument(
-        "--together-model-id",
-        default=None,
-        help="Together AI model identifier (e.g. fine-tuned model name).",
-    )
-    backend_group.add_argument(
+    parser.add_argument(
         "--huggingface-model-id",
-        default=None,
-        help="Base URL of the HuggingFace dedicated endpoint "
-        "(e.g. https://<hash>.endpoints.huggingface.cloud).",
+        required=True,
+        help="Hugging Face Hub repo id to serve via TGI on SageMaker.",
     )
     parser.add_argument(
-        "--condition",
-        default="finetuned",
-        choices=["instruct", "finetuned"],
+        "--condition", default="finetuned", choices=["instruct", "finetuned"]
     )
     parser.add_argument("--data-file", default=None)
     parser.add_argument("--output-csv", default=None)
     parser.add_argument(
         "--ft-corpus",
         default=None,
-        help=(
-            "Training corpus label used to produce the fine-tuned model. "
-            "Populates the ft_corpus output column."
-        ),
+        help="Training corpus label; populates the ft_corpus output column.",
     )
     args = parser.parse_args()
-
-    if args.together_model_id:
-        backend = "together"
-        model_id = args.together_model_id
-    else:
-        backend = "huggingface"
-        model_id = args.huggingface_model_id
 
     run_inference_codebook(
         config_path=args.config,
         rct_id=args.rct_id,
         model_key=args.model_key,
-        model_id=model_id,
-        backend=backend,
+        huggingface_model_id=args.huggingface_model_id,
         condition=args.condition,
         data_file_path=args.data_file,
         output_csv=args.output_csv,

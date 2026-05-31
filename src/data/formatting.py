@@ -7,19 +7,17 @@ def generate_qna_format(
     profile_info: pd.Series,
     var_labels: dict | None = None,
 ) -> str:
-    """Format the profile information of a subject in a Q&A format.
+    """Format a subject's profile fields as an interviewer Q&A block.
 
-    Parameters:
-        profile_info (pd.Series): A pandas Series containing the profile
-            information of the subject. Series index = variable codes (short
-            form when read via `load_data`).
-        var_labels (dict | None): Optional mapping from variable code to the
-            long-form survey question. When provided, the long-form text is
-            used in the rendered Q&A so the prompt is human-readable. Falls
-            back to the variable code when a key is missing.
+    Args:
+        profile_info: Series whose index is variable codes (short form when
+            read via `load_data`) and values are the subject's responses.
+        var_labels: Optional mapping from variable code to long-form survey
+            question. When supplied, the rendered text uses the long-form
+            label; falls back to the code when a label is missing.
 
     Returns:
-        str: The formatted survey response.
+        A multi-line string with one numbered Q&A pair per non-null field.
     """
     survey_response = ""
     counter = 1
@@ -45,9 +43,9 @@ def construct_system_message_with_treatment(
 ) -> str:
     """Fill `{profile}` and `{treatment}` placeholders in `system_template`.
 
-    Parameters:
+    Args:
         system_template: System-message template with `{profile}` and
-            `{treatment}` named placeholders (loaded from the RCT prompt JSON).
+            `{treatment}` named placeholders.
         profile_prompt: Formatted profile Q&A block.
         treatment: Treatment-arm label (key into `treatment_transcripts`).
         treatment_transcripts: Mapping from treatment label to transcript text.
@@ -126,18 +124,28 @@ def generate_synthetic_experiment_prompts(
 def build_finetune_source_records(
     source_id: str, source_cfg: dict, kind: str
 ) -> tuple[list[dict], list[str] | None]:
-    """Build per-subject {"messages": [...]} records for one fine-tuning source.
+    """Build per-subject `{"messages": [...]}` records for one source.
 
-    Expects `source_cfg` to provide `data_file`, `prompt_file`, and `outcome`,
-    and the prompt JSON to provide `profile_vars`, `system_template`,
-    `user_template`. RCT prompt JSONs additionally provide `treatment`
-    (transcripts dict); when present, `{treatment}` in `system_template` is
-    filled from the row's `treatment_column`. Subjects with a missing outcome
-    are dropped.
+    Subjects whose `outcome` is null or blank are dropped. For RCT sources,
+    `{treatment}` in the system template is filled from the row's treatment
+    column, and the per-record treatment labels are returned alongside so
+    callers can drive stratified splitting.
 
-    Returns (records, treatments) where `treatments` is the list of treatment
-    labels parallel to `records` for sources that supply a treatment column,
-    and None otherwise. Callers use it to drive stratified splitting.
+    Args:
+        source_id: Identifier of the source (used in error messages).
+        source_cfg: Per-source config block with `data_file`, `prompt_file`,
+            and `outcome` keys.
+        kind: Either `"rcts"` or `"surveys"`. RCT sources fill the treatment
+            placeholder; survey sources do not.
+
+    Returns:
+        Tuple `(records, treatments)`. `records` is the list of
+        chat-completion-shaped dicts. `treatments` is parallel to `records`
+        for RCT sources, or `None` for survey sources.
+
+    Raises:
+        ValueError: If `source_cfg` is missing `data_file`, `prompt_file`,
+            or `outcome`.
     """
     data_file = source_cfg.get("data_file")
     prompt_file = source_cfg.get("prompt_file")

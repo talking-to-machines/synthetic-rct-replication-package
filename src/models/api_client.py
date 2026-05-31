@@ -1,11 +1,14 @@
 import json
 import os
 import time
+import boto3
 import pandas as pd
+import sagemaker
+from botocore.exceptions import ClientError
 from openai import OpenAI
-from together import Together
+from sagemaker.huggingface import HuggingFaceModel, get_huggingface_llm_image_uri
 from tqdm import tqdm
-from src.utils.config import HF_TOKEN, TOGETHER_API_KEY
+from src.utils.config import AWS_DEFAULT_REGION, HF_TOKEN, SM_ROLE_ARN
 
 tqdm.pandas()
 
@@ -18,19 +21,21 @@ def create_batch_file(
     logit: bool = False,
     model: str = "gpt-4o-2024-08-06",
 ) -> str:
-    """
-    Create a JSONL batch file from the prompts DataFrame for the OpenAI Batch API.
+    """Create a JSONL batch file for the OpenAI Batch API.
 
-    Parameters:
-        prompts (pd.DataFrame): The DataFrame containing prompts.
-        system_message_field (str): The column name indicating the system message.
-        user_message_field (str): The column name indicating the user message.
-        batch_file_name (str): The name of the batch file.
-        logit (bool): Whether to include logprob parameters (max_tokens=1, logprobs=True, top_logprobs=5).
-        model (str): Model id for the batch request body.
+    Args:
+        prompts: DataFrame with one row per request; must contain `custom_id`
+            and the columns named by `system_message_field` and
+            `user_message_field`.
+        system_message_field: Column holding the system message.
+        user_message_field: Column holding the user message.
+        batch_file_name: Filename written under `batch_files/`.
+        logit: When True, sets `max_tokens=1`, `logprobs=True`, `top_logprobs=5`
+            for a single-token logit pass.
+        model: Model id placed in each request body.
 
     Returns:
-        str: The path to the created JSONL batch file.
+        Absolute path to the written JSONL batch file.
     """
     tasks = []
     for i in range(len(prompts)):
@@ -46,13 +51,14 @@ def create_batch_file(
             body["max_tokens"] = 1
             body["logprobs"] = True
             body["top_logprobs"] = 5
-        task = {
-            "custom_id": f'{prompts.loc[i, "custom_id"]}',
-            "method": "POST",
-            "url": "/v1/chat/completions",
-            "body": body,
-        }
-        tasks.append(task)
+        tasks.append(
+            {
+                "custom_id": f'{prompts.loc[i, "custom_id"]}',
+                "method": "POST",
+                "url": "/v1/chat/completions",
+                "body": body,
+            }
+        )
 
     current_dir = os.path.dirname(__file__)
     batch_file_name = os.path.join(current_dir, f"../../batch_files/{batch_file_name}")
@@ -70,16 +76,25 @@ def batch_query(
     batch_output_file_dir: str,
     logit: bool = False,
 ) -> pd.DataFrame:
-    """
-    Query the LLM using OpenAI batch processing and return the responses after completion.
+    """Submit an OpenAI batch job and return responses once it completes.
 
-    Parameters:
-        batch_input_file_dir (str): The directory containing the batch input file.
-        batch_output_file_dir (str): The directory containing the batch output file.
-        logit (bool): Whether to extract logprob data from the response.
+    Polls the batch endpoint until the job is `completed`, then writes the
+    raw output JSONL alongside the input and returns a parsed DataFrame.
+
+    Args:
+        client: Authenticated `openai.OpenAI` client.
+        batch_input_file_dir: Path to the JSONL file produced by
+            `create_batch_file`.
+        batch_output_file_dir: Filename for the downloaded output JSONL,
+            written under `batch_files/`.
+        logit: When True, includes top-k logprobs from the first generated
+            token in the returned `query_response` JSON string.
 
     Returns:
-        pd.DataFrame: The prompts with the corresponding LLM responses.
+        DataFrame with columns `custom_id` and `query_response`.
+
+    Raises:
+        Exception: If the batch job reaches the `failed` status.
     """
     batch_file = client.files.create(
         file=open(batch_input_file_dir, "rb"), purpose="batch"
@@ -101,8 +116,7 @@ def batch_query(
         else:
             time.sleep(300)
 
-    result_file_id = batch_job.output_file_id
-    results = client.files.content(result_file_id).content
+    results = client.files.content(batch_job.output_file_id).content
 
     current_dir = os.path.dirname(__file__)
     batch_output_dir = os.path.join(
@@ -125,16 +139,10 @@ def batch_query(
                 if logprobs_obj and logprobs_obj.get("content"):
                     for item in logprobs_obj["content"][0]["top_logprobs"]:
                         top_logprobs_data.append(
-                            {
-                                "token": item["token"],
-                                "logprob": item["logprob"],
-                            }
+                            {"token": item["token"], "logprob": item["logprob"]}
                         )
                 query_response = json.dumps(
-                    {
-                        "response": actual_response,
-                        "top_logprobs": top_logprobs_data,
-                    }
+                    {"response": actual_response, "top_logprobs": top_logprobs_data}
                 )
             else:
                 query_response = actual_response
@@ -149,20 +157,128 @@ def batch_query(
     return pd.DataFrame(response_list)
 
 
-def _parse_openai_logprobs(logprobs_obj) -> list:
-    """Parse OpenAI chat-completion logprobs (used by HF TGI / OpenAI).
+def _delete_leftover_endpoint(sm_client, name: str) -> None:
+    """Remove an endpoint and its config + model objects if they exist.
 
-    Returns the same per-position structure as the Together parser:
-    a list of {"sampled_token", "sampled_logprob", "top_logprobs"} dicts.
+    Used at deploy time to recover from a previously failed CreateEndpoint,
+    which can leave the three objects stranded under the same name.
+
+    Args:
+        sm_client: A boto3 `sagemaker` client.
+        name: The shared name of the endpoint, endpoint-config, and model.
+    """
+    for delete, kwargs in [
+        (sm_client.delete_endpoint, {"EndpointName": name}),
+        (sm_client.delete_endpoint_config, {"EndpointConfigName": name}),
+        (sm_client.delete_model, {"ModelName": name}),
+    ]:
+        try:
+            delete(**kwargs)
+        except ClientError as e:
+            msg = str(e)
+            if "Could not find" not in msg and "does not exist" not in msg:
+                raise
+
+
+def deploy_sagemaker_endpoint(
+    huggingface_model_id: str,
+    endpoint_name: str,
+    instance_type: str,
+    max_input_tokens: int = 2048,
+    max_total_tokens: int = 4096,
+    dtype: str = "bfloat16",
+    startup_timeout: int = 900,
+    num_shard: int | None = None,
+) -> tuple:
+    """Deploy `huggingface_model_id` on a real-time SageMaker TGI endpoint.
+
+    TGI pulls `HF_MODEL_ID` from the Hub at container start and exposes an
+    OpenAI-compatible chat-completions API. Blocks until the endpoint is
+    InService.
+
+    Args:
+        huggingface_model_id: Hub repo id served via `HF_MODEL_ID`.
+        endpoint_name: Stable SageMaker endpoint name (also used for the
+            EndpointConfig and Model objects).
+        instance_type: SageMaker inference instance type (e.g. `ml.g5.2xlarge`).
+        max_input_tokens: Per-request input cap passed as `MAX_INPUT_TOKENS`.
+        max_total_tokens: Per-request input+output cap passed as
+            `MAX_TOTAL_TOKENS`; also used for `MAX_BATCH_PREFILL_TOKENS`.
+        dtype: TGI `DTYPE` env var. Typically `bfloat16` for our models.
+        startup_timeout: Seconds allowed for the container to reach a healthy
+            state (large models need >10 min for weight download + warmup).
+        num_shard: Number of GPUs for tensor parallelism (TGI `NUM_SHARD`).
+            When None, TGI auto-detects from `CUDA_VISIBLE_DEVICES`.
+
+    Returns:
+        `(predictor, endpoint_name)` where `predictor.delete_endpoint()`
+        tears down the endpoint, config, and model objects in one call.
+
+    Raises:
+        RuntimeError: If `SM_ROLE_ARN` or `HF_TOKEN` is unset.
+    """
+    if not SM_ROLE_ARN:
+        raise RuntimeError("SM_ROLE_ARN is unset. Set it in your .env / environment.")
+    if not HF_TOKEN:
+        raise RuntimeError("HF_TOKEN is unset. Set it in your .env / environment.")
+
+    boto_session = boto3.Session(region_name=AWS_DEFAULT_REGION)
+    sess = sagemaker.Session(boto_session=boto_session)
+
+    sm_client = boto_session.client("sagemaker")
+    _delete_leftover_endpoint(sm_client, endpoint_name)
+
+    tgi_image = get_huggingface_llm_image_uri("huggingface", session=sess)
+
+    tgi_env = {
+        "HF_MODEL_ID": huggingface_model_id,
+        "HF_TOKEN": HF_TOKEN,
+        "DTYPE": dtype,
+        "MAX_INPUT_TOKENS": str(max_input_tokens),
+        "MAX_TOTAL_TOKENS": str(max_total_tokens),
+        "MAX_BATCH_PREFILL_TOKENS": str(max_total_tokens),
+    }
+    if num_shard is not None:
+        tgi_env["NUM_SHARD"] = str(num_shard)
+
+    hf_model = HuggingFaceModel(
+        image_uri=tgi_image,
+        role=SM_ROLE_ARN,
+        env=tgi_env,
+        sagemaker_session=sess,
+    )
+
+    print(f"Deploying {huggingface_model_id} -> {endpoint_name} ({instance_type})")
+    predictor = hf_model.deploy(
+        initial_instance_count=1,
+        instance_type=instance_type,
+        endpoint_name=endpoint_name,
+        container_startup_health_check_timeout=startup_timeout,
+    )
+    print(f"Endpoint InService: {endpoint_name}")
+    return predictor, endpoint_name
+
+
+def _parse_invoke_logprobs(logprobs_obj) -> list:
+    """Convert TGI's chat-completion logprobs into the per-position schema.
+
+    Args:
+        logprobs_obj: The `logprobs` dict from a TGI chat-completion choice,
+            shaped `{"content": [{"token", "logprob", "top_logprobs": [...]}, ...]}`.
+
+    Returns:
+        A list of `{sampled_token, sampled_logprob, top_logprobs}` dicts,
+        one per generated position. Empty if `logprobs_obj` is falsy.
     """
     per_position = []
-    if not logprobs_obj or not getattr(logprobs_obj, "content", None):
+    if not logprobs_obj:
         return per_position
-    for tok in logprobs_obj.content:
+    for tok in logprobs_obj.get("content", []) or []:
         entries = []
         seen = set()
 
         def _add(t, lp):
+            """Append a `(token, logprob)` pair, deduped by token (case-insensitive)."""
             if t is None or lp is None:
                 return
             key = t.strip().lower()
@@ -171,14 +287,14 @@ def _parse_openai_logprobs(logprobs_obj) -> list:
             seen.add(key)
             entries.append({"token": t, "logprob": lp})
 
-        _add(tok.token, tok.logprob)
-        for alt in tok.top_logprobs or []:
-            _add(alt.token, alt.logprob)
+        _add(tok.get("token"), tok.get("logprob"))
+        for alt in tok.get("top_logprobs") or []:
+            _add(alt.get("token"), alt.get("logprob"))
 
         per_position.append(
             {
-                "sampled_token": tok.token,
-                "sampled_logprob": tok.logprob,
+                "sampled_token": tok.get("token"),
+                "sampled_logprob": tok.get("logprob"),
                 "top_logprobs": entries,
             }
         )
@@ -191,40 +307,40 @@ def inference_endpoint_query(
     user_message_field: str,
     experiment_round: str,
     experiment_version: str,
-    model_name: str,
-    model_id: str,
+    endpoint_name: str,
     temperature: float = 1.0,
     max_tokens: int = 1,
     logprobs_top_k: int = 5,
 ) -> pd.DataFrame:
-    """
-    Query a dedicated inference endpoint (Together AI or HuggingFace).
+    """Query an InService SageMaker TGI endpoint, one prompt per row.
 
-    Saves per-row progress to resume interrupted runs.
+    Persists per-row results to
+    `outputs/logs/inference/{experiment_round}/progress/{experiment_version}.csv`
+    so a re-invocation with the same arguments skips already-completed rows.
 
-    Parameters:
-        prompts (pd.DataFrame): The DataFrame containing prompts.
-        system_message_field (str): The column name indicating the system message.
-        user_message_field (str): The column name indicating the user message.
-        experiment_round (str): The round of the experiment.
-        experiment_version (str): The experiment/model version.
-        model_name (str): Backend identifier — "together_logit" or "hf_logit".
-        model_id (str): For "together_logit", the Together model name. For
-            "hf_logit", the base URL of the HuggingFace dedicated endpoint
-            (TGI ignores the `model` field).
-        temperature: Sampling temperature.
+    Args:
+        prompts: DataFrame containing `ID`, `system_message_field`, and
+            `user_message_field`. Mutated in place to add an `llm_response`
+            column.
+        system_message_field: Column holding the system message.
+        user_message_field: Column holding the user message.
+        experiment_round: RCT identifier used in the progress-file path.
+        experiment_version: Experiment slug used in the progress-file name.
+        endpoint_name: Name of an InService endpoint (deploy via
+            `deploy_sagemaker_endpoint`).
+        temperature: Sampling temperature passed to the chat-completion call.
         max_tokens: Maximum tokens generated per query.
-        logprobs_top_k: Number of top-k logprobs returned at each position.
+        logprobs_top_k: Number of top-k logprobs returned per position.
 
     Returns:
-        pd.DataFrame: The prompts with the corresponding LLM responses.
+        The input DataFrame with an `llm_response` column whose values are
+        JSON strings `{"response": str, "per_position_logprobs": [...]}`.
     """
     current_dir = os.path.dirname(__file__)
     progress_dir = os.path.join(
         current_dir, f"../../outputs/logs/inference/{experiment_round}/progress"
     )
     progress_file = os.path.join(progress_dir, f"{experiment_version}.csv")
-
     os.makedirs(progress_dir, exist_ok=True)
 
     prompts["ID"] = prompts["ID"].astype(str)
@@ -237,7 +353,11 @@ def inference_endpoint_query(
     else:
         prompts["llm_response"] = None
 
+    boto_session = boto3.Session(region_name=AWS_DEFAULT_REGION)
+    sm_runtime = boto_session.client("sagemaker-runtime")
+
     def _save_progress(row: pd.Series, result: str) -> str:
+        """Append `result` to the progress CSV and return it for assignment."""
         row["llm_response"] = result
         row.to_frame().T.to_csv(
             progress_file,
@@ -247,129 +367,60 @@ def inference_endpoint_query(
         )
         return result
 
-    def together_logit_query(row: pd.Series):
-        """Query Together AI for one prompt row and capture per-position logprobs."""
+    def sagemaker_logit_query(row: pd.Series):
+        """Invoke the endpoint for one prompt row; skip if already answered."""
         if not pd.isnull(row["llm_response"]):
             return row["llm_response"]
 
-        messages = [
-            {"role": "system", "content": row[system_message_field]},
-            {"role": "user", "content": row[user_message_field]},
-        ]
-
-        create_kwargs = {
-            "model": model_id,
-            "messages": messages,
-            "stream": False,
-            "logprobs": logprobs_top_k,
-            "temperature": temperature,
-        }
-        if max_tokens is not None:
-            create_kwargs["max_tokens"] = max_tokens
-        response = client.chat.completions.create(**create_kwargs)
-
-        actual_response = response.choices[0].message.content
-
-        # Together's chat API with logprobs=k returns, for each generated
-        # position, the sampled token (tokens[i]/token_logprobs[i]) plus the
-        # top-k most-likely alternatives (top_logprobs[i]). Store per-position
-        # so the parser can scan the sequence for Yes/No.
-        per_position_logprobs = []
-        logprobs_obj = response.choices[0].logprobs
-        if logprobs_obj:
-            tokens = getattr(logprobs_obj, "tokens", None) or []
-            token_logprobs = getattr(logprobs_obj, "token_logprobs", None) or []
-            top_lp = getattr(logprobs_obj, "top_logprobs", None) or []
-
-            for i, sampled_token in enumerate(tokens):
-                sampled_logprob = token_logprobs[i] if i < len(token_logprobs) else None
-                entries = []
-                seen_tokens = set()
-
-                def _add(tok, lp):
-                    if tok is None or lp is None:
-                        return
-                    key = tok.strip().lower()
-                    if key in seen_tokens:
-                        return
-                    seen_tokens.add(key)
-                    entries.append({"token": tok, "logprob": lp})
-
-                _add(sampled_token, sampled_logprob)
-                if i < len(top_lp):
-                    first_pos = top_lp[i]
-                    if isinstance(first_pos, dict):
-                        for tok, lp in first_pos.items():
-                            _add(tok, lp)
-                    elif isinstance(first_pos, list):
-                        for item in first_pos:
-                            if isinstance(item, dict):
-                                _add(item.get("token"), item.get("logprob"))
-
-                per_position_logprobs.append(
-                    {
-                        "sampled_token": sampled_token,
-                        "sampled_logprob": sampled_logprob,
-                        "top_logprobs": entries,
-                    }
-                )
-
-        result = json.dumps(
-            {
-                "response": actual_response,
-                "per_position_logprobs": per_position_logprobs,
-            }
-        )
-        return _save_progress(row, result)
-
-    def hf_logit_query(row: pd.Series):
-        """Query a HuggingFace dedicated endpoint (OpenAI-compatible TGI)."""
-        if not pd.isnull(row["llm_response"]):
-            return row["llm_response"]
-
-        messages = [
-            {"role": "system", "content": row[system_message_field]},
-            {"role": "user", "content": row[user_message_field]},
-        ]
-
-        create_kwargs = {
-            "model": hf_served_model,
-            "messages": messages,
+        payload = {
+            "messages": [
+                {"role": "system", "content": row[system_message_field]},
+                {"role": "user", "content": row[user_message_field]},
+            ],
             "temperature": temperature,
             "logprobs": True,
             "top_logprobs": logprobs_top_k,
         }
         if max_tokens is not None:
-            create_kwargs["max_tokens"] = max_tokens
-        response = client.chat.completions.create(**create_kwargs)
+            payload["max_tokens"] = max_tokens
 
-        choice = response.choices[0]
-        per_position_logprobs = _parse_openai_logprobs(choice.logprobs)
+        resp = sm_runtime.invoke_endpoint(
+            EndpointName=endpoint_name,
+            ContentType="application/json",
+            Body=json.dumps(payload),
+        )
+        body = json.loads(resp["Body"].read())
+        choice = body["choices"][0]
+        per_position = _parse_invoke_logprobs(choice.get("logprobs"))
         result = json.dumps(
             {
-                "response": choice.message.content,
-                "per_position_logprobs": per_position_logprobs,
+                "response": choice["message"]["content"],
+                "per_position_logprobs": per_position,
             }
         )
         return _save_progress(row, result)
 
-    if model_name == "together_logit":
-        client = Together(api_key=TOGETHER_API_KEY)
-        prompts["llm_response"] = prompts.progress_apply(together_logit_query, axis=1)
-    elif model_name == "hf_logit":
-        client = OpenAI(
-            base_url=model_id.rstrip("/") + "/v1",
-            api_key=HF_TOKEN,
-        )
-        models_listed = client.models.list().data
-        if not models_listed:
-            raise RuntimeError(
-                f"Endpoint {model_id} returned no models at /v1/models. "
-                "Check the endpoint is running and HF_TOKEN is valid."
-            )
-        hf_served_model = models_listed[0].id
-        prompts["llm_response"] = prompts.progress_apply(hf_logit_query, axis=1)
-    else:
-        raise ValueError(f"Model {model_name} is not supported.")
-
+    prompts["llm_response"] = prompts.progress_apply(sagemaker_logit_query, axis=1)
     return prompts
+
+
+def delete_sagemaker_endpoint(predictor=None, endpoint_name: str | None = None) -> None:
+    """Tear down a SageMaker endpoint and its config + model objects.
+
+    Args:
+        predictor: Predictor returned by `deploy_sagemaker_endpoint`. Calls
+            `predictor.delete_endpoint()` which cleans up all three objects.
+        endpoint_name: Endpoint name to delete via the boto SageMaker client.
+            Use when the predictor handle is unavailable. No-op on a 404.
+
+    Raises:
+        ValueError: If neither `predictor` nor `endpoint_name` is provided.
+    """
+    if predictor is not None:
+        predictor.delete_endpoint()
+        return
+    if endpoint_name is None:
+        raise ValueError("Provide either `predictor` or `endpoint_name`.")
+    boto_session = boto3.Session(region_name=AWS_DEFAULT_REGION)
+    sm_client = boto_session.client("sagemaker")
+    _delete_leftover_endpoint(sm_client, endpoint_name)

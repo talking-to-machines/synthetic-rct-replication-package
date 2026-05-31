@@ -3,9 +3,7 @@
 Reads:  source data files + prompt JSONs declared in config.yaml
 Writes: data/processed/{kind}/{id}/{id}_train.json (per-source training set)
         data/processed/{kind}/{id}/{id}_test.csv   (per-source holdout, when split)
-        {output_jsonl}                              (combined JSONL for Together AI)
-
-Originally extracted from the archived notebook `prepare_fine_tuning_data.ipynb`.
+        {output_jsonl}                              (combined JSONL training corpus)
 """
 
 from pathlib import Path
@@ -26,29 +24,23 @@ def build_corpus(
 
     Iterates over every survey/RCT listed under `cfg["finetuning"]`, builds
     per-subject `{"messages": [...]}` records, optionally splits each source
-    into train/test using `finetuning.test_fraction` and `finetuning.seed`,
-    writes per-source files, and concatenates the training portions into a
-    single JSONL ready to upload to Together AI.
+    into train/test, writes per-source files, and concatenates the training
+    portions into a single JSONL.
 
     Per-source files written under `data/processed/{kind}/{id}/`:
-        - `{id}_train.json` (always; JSON array)
-        - `{id}_test.csv`   (only when `train_test_split=True`; CSV with
-          `treatment`, `system`, `user`, `assistant` columns when the source
-          has a treatment column, else just the message-role columns)
+        - `{id}_train.json` (always; JSON array).
+        - `{id}_test.csv` (only when `train_test_split=True`).
 
     When a source has a treatment column, the train/test split is stratified
-    on treatment (equal arm balance across train and test). Otherwise the
-    split is a uniform random shuffle.
+    on treatment; otherwise it is a uniform random shuffle.
 
     Args:
         cfg: Parsed `config.yaml` dict. Must contain a `finetuning` block
-            (with optional `surveys`/`rcts` lists, `test_fraction`, `seed`)
             and matching `surveys`/`rcts` entries with `data_file`,
             `prompt_file`, and `outcome` fields.
-        output_jsonl: Path for the combined training corpus written as JSONL.
-        train_test_split: When True (default) hold out a per-source test
-            split; when False, use every record for training and skip test
-            files entirely.
+        output_jsonl: Destination for the combined training JSONL.
+        train_test_split: When True, hold out a per-source test split using
+            `finetuning.test_fraction`.
 
     Returns:
         Number of training examples written to `output_jsonl`.
