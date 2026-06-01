@@ -104,10 +104,27 @@ def _train_in_container() -> None:
     p.add_argument(
         "--lora_target_modules", type=str, default="q_proj,k_proj,v_proj,o_proj"
     )
+    p.add_argument("--lr_scheduler", type=str, default="cosine")
+    p.add_argument("--optimizer", type=str, default="adamw_torch")
+    p.add_argument(
+        "--precision", type=str, default="bf16", choices=["bf16", "fp16", "fp32"]
+    )
+    p.add_argument("--n_checkpoints", type=int, default=1)
     p.add_argument("--hub_model_id", type=str, default=None)
     p.add_argument("--gradient_checkpointing", type=_str2bool, default=False)
     p.add_argument("--fsdp", type=_str2bool, default=False)
     args = p.parse_args()
+
+    precision_dtype = {
+        "bf16": torch.bfloat16,
+        "fp16": torch.float16,
+        "fp32": torch.float32,
+    }[args.precision]
+    precision_flags = {
+        "bf16": {"bf16": True},
+        "fp16": {"fp16": True},
+        "fp32": {},
+    }[args.precision]
 
     rank = int(os.environ.get("RANK", "0"))
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
@@ -146,7 +163,7 @@ def _train_in_container() -> None:
     model = AutoModelForCausalLM.from_pretrained(
         args.base_model,
         token=hf_token,
-        torch_dtype=torch.bfloat16,
+        torch_dtype=precision_dtype,
     )
 
     transformer_layer_cls = type(model.model.layers[0]).__name__
@@ -172,16 +189,16 @@ def _train_in_container() -> None:
         "learning_rate": args.lr,
         "weight_decay": args.weight_decay,
         "warmup_ratio": args.warmup_ratio,
-        "lr_scheduler_type": "cosine",
-        "optim": "adamw_torch",
-        "bf16": True,
+        "lr_scheduler_type": args.lr_scheduler,
+        "optim": args.optimizer,
         "max_grad_norm": args.max_grad_norm,
         "seed": args.seed,
-        "save_total_limit": 1,
+        "save_total_limit": args.n_checkpoints,
         "save_strategy": "epoch",
         "logging_steps": 10,
         "report_to": "none",
         "push_to_hub": False,
+        **precision_flags,
     }
     # TRL renamed `max_seq_length` -> `max_length` between ~0.12 and 0.20.
     sft_params = inspect.signature(SFTConfig).parameters
@@ -268,7 +285,7 @@ def _train_in_container() -> None:
     base = AutoModelForCausalLM.from_pretrained(
         args.base_model,
         token=hf_token,
-        torch_dtype=torch.bfloat16,
+        torch_dtype=precision_dtype,
         device_map={"": "cpu"},
         low_cpu_mem_usage=True,
     )

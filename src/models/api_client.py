@@ -220,7 +220,10 @@ def deploy_sagemaker_endpoint(
     instance_type: str,
     max_input_tokens: int = 2048,
     max_total_tokens: int = 4096,
+    max_batch_prefill_tokens: int = 4096,
     dtype: str = "bfloat16",
+    device_map: str = "auto",
+    model_server_workers: int = 1,
     startup_timeout: int = 900,
     num_shard: int | None = None,
     adapter_id: str | None = None,
@@ -248,8 +251,16 @@ def deploy_sagemaker_endpoint(
         instance_type: SageMaker inference instance type (e.g. `ml.g5.2xlarge`).
         max_input_tokens: Per-request input cap (TGI path only).
         max_total_tokens: Per-request input+output cap (TGI path only).
-        dtype: Floating-point dtype string. Passed to TGI as `DTYPE`; the
-            custom handler always uses bf16 regardless.
+        max_batch_prefill_tokens: TGI `MAX_BATCH_PREFILL_TOKENS` env (TGI
+            path only).
+        dtype: Floating-point dtype string (`bfloat16` / `float16` / `float32`).
+            Passed to TGI as `DTYPE`; on the custom-handler path it's exported
+            as `DTYPE` and read by `model_fn` to pick `torch_dtype`.
+        device_map: Accelerate device-placement string (custom-handler path
+            only). Exported as `DEVICE_MAP` env var.
+        model_server_workers: Number of MMS workers (custom-handler path
+            only). Exported as `SAGEMAKER_MODEL_SERVER_WORKERS`; 1 lets
+            `device_map="auto"` shard the model once across visible GPUs.
         startup_timeout: Seconds allowed for the container to reach a healthy
             state (large models need >10 min for weight download + warmup).
         num_shard: Number of GPUs for tensor parallelism (TGI path only).
@@ -282,7 +293,7 @@ def deploy_sagemaker_endpoint(
             "DTYPE": dtype,
             "MAX_INPUT_TOKENS": str(max_input_tokens),
             "MAX_TOTAL_TOKENS": str(max_total_tokens),
-            "MAX_BATCH_PREFILL_TOKENS": str(max_total_tokens),
+            "MAX_BATCH_PREFILL_TOKENS": str(max_batch_prefill_tokens),
         }
         if num_shard is not None:
             tgi_env["NUM_SHARD"] = str(num_shard)
@@ -305,10 +316,12 @@ def deploy_sagemaker_endpoint(
             "BASE_MODEL_ID": huggingface_model_id,
             "ADAPTER_ID": adapter_id,
             "HF_TOKEN": HF_TOKEN,
+            "DTYPE": dtype,
+            "DEVICE_MAP": device_map,
             # HF DLC defaults to one MMS worker per GPU; on multi-GPU instances
-            # each worker would re-load the full model and OOM. Force a single
-            # worker so device_map="auto" shards the model across all GPUs.
-            "SAGEMAKER_MODEL_SERVER_WORKERS": "1",
+            # each worker would re-load the full model and OOM. A single worker
+            # lets device_map="auto" shard the model once across all GPUs.
+            "SAGEMAKER_MODEL_SERVER_WORKERS": str(model_server_workers),
         }
         # transformers 4.49 added OLMo-2 support; pin to a matching SDK triple.
         hf_model = HuggingFaceModel(
@@ -386,6 +399,7 @@ def inference_endpoint_query(
     endpoint_name: str,
     temperature: float = 1.0,
     max_tokens: int = 1,
+    logprobs: bool = True,
     logprobs_top_k: int = 5,
     adapter_id: str | None = None,
 ) -> pd.DataFrame:
@@ -407,6 +421,8 @@ def inference_endpoint_query(
             `deploy_sagemaker_endpoint`).
         temperature: Sampling temperature passed to the chat-completion call.
         max_tokens: Maximum tokens generated per query.
+        logprobs: When True, the request asks the endpoint to return per-token
+            logprobs alongside the response.
         logprobs_top_k: Number of top-k logprobs returned per position.
         adapter_id: Optional LoRA adapter Hub repo id, included as
             `adapter_id` in each request body. Must match an adapter the
@@ -458,7 +474,7 @@ def inference_endpoint_query(
                 {"role": "user", "content": row[user_message_field]},
             ],
             "temperature": temperature,
-            "logprobs": True,
+            "logprobs": logprobs,
             "top_logprobs": logprobs_top_k,
         }
         if max_tokens is not None:

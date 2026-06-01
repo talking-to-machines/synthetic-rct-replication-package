@@ -330,13 +330,19 @@ def run_inference_codebook(
     endpoint_name = experiment_version.lower().replace("_", "-").replace(".", "")[:63]
 
     serving_adapter_id = adapter_id if condition == "finetuned" else None
+    dtype = {"bf16": "bfloat16", "fp16": "float16", "fp32": "float32"}[
+        inference.get("precision", "bf16")
+    ]
     predictor, endpoint_name = deploy_sagemaker_endpoint(
         huggingface_model_id=base_model,
         endpoint_name=endpoint_name,
         instance_type=instance_type,
         max_input_tokens=inference.get("max_seq_length", 2048),
-        max_total_tokens=inference.get("max_seq_length", 2048) * 2,
-        dtype=("bfloat16" if inference.get("precision") == "bf16" else "float16"),
+        max_total_tokens=inference.get("max_total_tokens", 4096),
+        max_batch_prefill_tokens=inference.get("max_batch_prefill_tokens", 4096),
+        dtype=dtype,
+        device_map=inference.get("device_map", "auto"),
+        model_server_workers=inference.get("model_server_workers", 1),
         startup_timeout=sm_cfg.get("endpoint_startup_timeout", 900),
         num_shard=model_cfg.get("inference_num_shard"),
         adapter_id=serving_adapter_id,
@@ -352,6 +358,7 @@ def run_inference_codebook(
             endpoint_name=endpoint_name,
             temperature=inference.get("temperature", 1.0),
             max_tokens=inference.get("max_tokens", 1),
+            logprobs=inference.get("logprobs", True),
             logprobs_top_k=inference.get("logprobs_top_k", 5),
             adapter_id=serving_adapter_id,
         )
@@ -445,12 +452,16 @@ def run_inference_codebook(
                 model_cfg.get("training_instance_type") if is_finetuned else None
             ),
             "infer_precision": inference.get("precision"),
-            "infer_batch_size": inference.get("batch_size"),
             "infer_max_seq_length": inference.get("max_seq_length"),
+            "infer_max_total_tokens": inference.get("max_total_tokens"),
+            "infer_max_batch_prefill_tokens": inference.get("max_batch_prefill_tokens"),
             "infer_temperature": inference.get("temperature"),
             "infer_max_tokens": inference.get("max_tokens"),
+            "infer_logprobs": inference.get("logprobs"),
             "infer_logprobs_top_k": inference.get("logprobs_top_k"),
             "infer_target_tokens": ",".join(inference.get("target_tokens", [])) or None,
+            "infer_device_map": inference.get("device_map"),
+            "infer_model_server_workers": inference.get("model_server_workers"),
             "infer_instance_type": instance_type,
             "infer_num_shard": model_cfg.get("inference_num_shard"),
         }

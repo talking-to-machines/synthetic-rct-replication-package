@@ -1,16 +1,19 @@
 """Custom SageMaker inference handler: base model + LoRA adapter via PEFT.
 
-Load the base in bf16, apply the adapter via `PeftModel.from_pretrained`
-(no merge), generate, and return logprobs in the chat-completions shape TGI
-emits so existing callers and parsers work unchanged. Used in place of TGI
-for architectures whose attention layout TGI's LoRA loader can't patch
-(e.g. OLMo-2).
+Load the base, apply the adapter via `PeftModel.from_pretrained` (no merge),
+generate, and return logprobs in the chat-completions shape TGI emits so
+existing callers and parsers work unchanged. Used in place of TGI for
+architectures whose attention layout TGI's LoRA loader can't patch (e.g.
+OLMo-2).
 
 Env vars (set by `deploy_sagemaker_endpoint`):
   BASE_MODEL_ID   Hub repo id of the base instruct model (required).
   ADAPTER_ID      Hub repo id of the LoRA adapter (optional; when unset
                   the handler serves the bare base).
   HF_TOKEN        Hub token; needed for private repos.
+  DTYPE           `bfloat16` / `float16` / `float32` (default `bfloat16`).
+  DEVICE_MAP      Accelerate placement string, e.g. `auto` (default `auto`).
+                  Ignored when running on CPU.
 """
 
 import json
@@ -40,7 +43,18 @@ def model_fn(model_dir: str) -> dict:
     token = os.environ.get("HF_TOKEN") or None
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    print(f"[model_fn] device={device}  base={base_id}  adapter={adapter_id!r}")
+    dtype_name = os.environ.get("DTYPE", "bfloat16")
+    torch_dtype = {
+        "bfloat16": torch.bfloat16,
+        "float16": torch.float16,
+        "float32": torch.float32,
+    }[dtype_name]
+    device_map = os.environ.get("DEVICE_MAP", "auto") if device == "cuda" else None
+
+    print(
+        f"[model_fn] device={device}  dtype={dtype_name}  device_map={device_map}  "
+        f"base={base_id}  adapter={adapter_id!r}"
+    )
 
     tokenizer = AutoTokenizer.from_pretrained(base_id, token=token)
     if tokenizer.pad_token is None:
@@ -49,8 +63,8 @@ def model_fn(model_dir: str) -> dict:
     base = AutoModelForCausalLM.from_pretrained(
         base_id,
         token=token,
-        torch_dtype=torch.bfloat16,
-        device_map="auto" if device == "cuda" else None,
+        torch_dtype=torch_dtype,
+        device_map=device_map,
     )
 
     if adapter_id:
