@@ -1,5 +1,7 @@
 import json
 import os
+import tarfile
+import tempfile
 import time
 import boto3
 import pandas as pd
@@ -157,6 +159,38 @@ def batch_query(
     return pd.DataFrame(response_list)
 
 
+def _bundle_and_upload_inference_code(sess, serving_dir: str) -> str:
+    """Package `serving_dir` into a code-only model.tar.gz and upload to S3.
+
+    The HF inference DLC only picks up a custom handler when it lives inside
+    `model_data` at `code/inference.py`. The tarball carries no weights;
+    `model_fn` in inference.py downloads the base + adapter from the Hub at
+    startup.
+
+    Args:
+        sess: A `sagemaker.Session` (used for bucket + S3 client).
+        serving_dir: Local directory containing inference.py and requirements.txt.
+
+    Returns:
+        The S3 URI of the uploaded tarball, suitable for `model_data=...`.
+    """
+    with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as f:
+        tarball = f.name
+    try:
+        with tarfile.open(tarball, "w:gz") as tar:
+            for fname in sorted(os.listdir(serving_dir)):
+                src = os.path.join(serving_dir, fname)
+                if os.path.isfile(src):
+                    tar.add(src, arcname=f"code/{fname}")
+
+        bucket = sess.default_bucket()
+        key = "synthetic-rct/serving/inference_handler.tar.gz"
+        sess.boto_session.client("s3").upload_file(tarball, bucket, key)
+        return f"s3://{bucket}/{key}"
+    finally:
+        os.unlink(tarball)
+
+
 def _delete_leftover_endpoint(sm_client, name: str) -> None:
     """Remove an endpoint and its config + model objects if they exist.
 
@@ -189,26 +223,38 @@ def deploy_sagemaker_endpoint(
     dtype: str = "bfloat16",
     startup_timeout: int = 900,
     num_shard: int | None = None,
+    adapter_id: str | None = None,
 ) -> tuple:
-    """Deploy `huggingface_model_id` on a real-time SageMaker TGI endpoint.
+    """Deploy a model on a real-time SageMaker endpoint.
 
-    TGI pulls `HF_MODEL_ID` from the Hub at container start and exposes an
-    OpenAI-compatible chat-completions API. Blocks until the endpoint is
-    InService.
+    Two paths depending on whether a LoRA adapter is supplied:
+
+      - `adapter_id is None` (default): TGI deployment. The HF LLM DLC pulls
+        `HF_MODEL_ID` from the Hub at container start and exposes an
+        OpenAI-compatible chat-completions API.
+      - `adapter_id is not None`: HF PyTorch inference DLC with a custom
+        handler (`src/serving/inference.py`) that loads the base + adapter
+        via PEFT. TGI's LoRA path isn't used here because its adapter loader
+        assumes a fused `query_key_value` module that some architectures
+        (e.g. OLMo-2) don't have.
+
+    Blocks until the endpoint is InService.
 
     Args:
-        huggingface_model_id: Hub repo id served via `HF_MODEL_ID`.
+        huggingface_model_id: Hub repo id of the model (or base, when an
+            adapter is supplied) served via `HF_MODEL_ID` / `BASE_MODEL_ID`.
         endpoint_name: Stable SageMaker endpoint name (also used for the
             EndpointConfig and Model objects).
         instance_type: SageMaker inference instance type (e.g. `ml.g5.2xlarge`).
-        max_input_tokens: Per-request input cap passed as `MAX_INPUT_TOKENS`.
-        max_total_tokens: Per-request input+output cap passed as
-            `MAX_TOTAL_TOKENS`; also used for `MAX_BATCH_PREFILL_TOKENS`.
-        dtype: TGI `DTYPE` env var. Typically `bfloat16` for our models.
+        max_input_tokens: Per-request input cap (TGI path only).
+        max_total_tokens: Per-request input+output cap (TGI path only).
+        dtype: Floating-point dtype string. Passed to TGI as `DTYPE`; the
+            custom handler always uses bf16 regardless.
         startup_timeout: Seconds allowed for the container to reach a healthy
             state (large models need >10 min for weight download + warmup).
-        num_shard: Number of GPUs for tensor parallelism (TGI `NUM_SHARD`).
-            When None, TGI auto-detects from `CUDA_VISIBLE_DEVICES`.
+        num_shard: Number of GPUs for tensor parallelism (TGI path only).
+        adapter_id: Optional Hub repo id of a LoRA adapter. When set, the
+            custom-handler path is used.
 
     Returns:
         `(predictor, endpoint_name)` where `predictor.delete_endpoint()`
@@ -228,27 +274,57 @@ def deploy_sagemaker_endpoint(
     sm_client = boto_session.client("sagemaker")
     _delete_leftover_endpoint(sm_client, endpoint_name)
 
-    tgi_image = get_huggingface_llm_image_uri("huggingface", session=sess)
+    if adapter_id is None:
+        tgi_image = get_huggingface_llm_image_uri("huggingface", session=sess)
+        tgi_env = {
+            "HF_MODEL_ID": huggingface_model_id,
+            "HF_TOKEN": HF_TOKEN,
+            "DTYPE": dtype,
+            "MAX_INPUT_TOKENS": str(max_input_tokens),
+            "MAX_TOTAL_TOKENS": str(max_total_tokens),
+            "MAX_BATCH_PREFILL_TOKENS": str(max_total_tokens),
+        }
+        if num_shard is not None:
+            tgi_env["NUM_SHARD"] = str(num_shard)
 
-    tgi_env = {
-        "HF_MODEL_ID": huggingface_model_id,
-        "HF_TOKEN": HF_TOKEN,
-        "DTYPE": dtype,
-        "MAX_INPUT_TOKENS": str(max_input_tokens),
-        "MAX_TOTAL_TOKENS": str(max_total_tokens),
-        "MAX_BATCH_PREFILL_TOKENS": str(max_total_tokens),
-    }
-    if num_shard is not None:
-        tgi_env["NUM_SHARD"] = str(num_shard)
+        hf_model = HuggingFaceModel(
+            image_uri=tgi_image,
+            role=SM_ROLE_ARN,
+            env=tgi_env,
+            sagemaker_session=sess,
+        )
+        print(
+            f"Deploying {huggingface_model_id} -> {endpoint_name} ({instance_type}) [TGI]"
+        )
+    else:
+        serving_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "serving")
+        )
+        model_data_uri = _bundle_and_upload_inference_code(sess, serving_dir)
+        env = {
+            "BASE_MODEL_ID": huggingface_model_id,
+            "ADAPTER_ID": adapter_id,
+            "HF_TOKEN": HF_TOKEN,
+            # HF DLC defaults to one MMS worker per GPU; on multi-GPU instances
+            # each worker would re-load the full model and OOM. Force a single
+            # worker so device_map="auto" shards the model across all GPUs.
+            "SAGEMAKER_MODEL_SERVER_WORKERS": "1",
+        }
+        # transformers 4.49 added OLMo-2 support; pin to a matching SDK triple.
+        hf_model = HuggingFaceModel(
+            model_data=model_data_uri,
+            role=SM_ROLE_ARN,
+            env=env,
+            sagemaker_session=sess,
+            transformers_version="4.49",
+            pytorch_version="2.6",
+            py_version="py312",
+        )
+        print(
+            f"Deploying base={huggingface_model_id} + adapter={adapter_id} -> "
+            f"{endpoint_name} ({instance_type}) [custom PEFT handler]"
+        )
 
-    hf_model = HuggingFaceModel(
-        image_uri=tgi_image,
-        role=SM_ROLE_ARN,
-        env=tgi_env,
-        sagemaker_session=sess,
-    )
-
-    print(f"Deploying {huggingface_model_id} -> {endpoint_name} ({instance_type})")
     predictor = hf_model.deploy(
         initial_instance_count=1,
         instance_type=instance_type,
@@ -260,10 +336,10 @@ def deploy_sagemaker_endpoint(
 
 
 def _parse_invoke_logprobs(logprobs_obj) -> list:
-    """Convert TGI's chat-completion logprobs into the per-position schema.
+    """Convert chat-completion logprobs into the per-position schema.
 
     Args:
-        logprobs_obj: The `logprobs` dict from a TGI chat-completion choice,
+        logprobs_obj: The `logprobs` dict from a chat-completion choice,
             shaped `{"content": [{"token", "logprob", "top_logprobs": [...]}, ...]}`.
 
     Returns:
@@ -311,8 +387,9 @@ def inference_endpoint_query(
     temperature: float = 1.0,
     max_tokens: int = 1,
     logprobs_top_k: int = 5,
+    adapter_id: str | None = None,
 ) -> pd.DataFrame:
-    """Query an InService SageMaker TGI endpoint, one prompt per row.
+    """Query an InService SageMaker endpoint, one prompt per row.
 
     Persists per-row results to
     `outputs/logs/inference/{experiment_round}/progress/{experiment_version}.csv`
@@ -331,6 +408,9 @@ def inference_endpoint_query(
         temperature: Sampling temperature passed to the chat-completion call.
         max_tokens: Maximum tokens generated per query.
         logprobs_top_k: Number of top-k logprobs returned per position.
+        adapter_id: Optional LoRA adapter Hub repo id, included as
+            `adapter_id` in each request body. Must match an adapter the
+            endpoint was deployed with (see `deploy_sagemaker_endpoint`).
 
     Returns:
         The input DataFrame with an `llm_response` column whose values are
@@ -383,6 +463,8 @@ def inference_endpoint_query(
         }
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
+        if adapter_id is not None:
+            payload["adapter_id"] = adapter_id
 
         resp = sm_runtime.invoke_endpoint(
             EndpointName=endpoint_name,

@@ -1,9 +1,9 @@
 """Inference for all model x condition x RCT combinations.
 
 `run_gpt_inference` runs the OpenAI Batch path for GPT-family models.
-`run_inference_codebook` auto-deploys a SageMaker TGI endpoint for the
-HF Hub repo id supplied via `--huggingface-model-id`, runs the per-prompt
-logit pass, tears the endpoint down, and writes a CSV conforming to
+`run_inference_codebook` auto-deploys a SageMaker endpoint for the base
+instruct model (plus an optional LoRA adapter), runs the per-prompt logit
+pass, tears the endpoint down, and writes a CSV conforming to
 `data/synthetic/codebook_synthetic.csv`.
 """
 
@@ -240,34 +240,33 @@ def run_inference_codebook(
     config_path: str,
     rct_id: str,
     model_key: str,
-    huggingface_model_id: str,
     condition: str = "finetuned",
+    adapter_id: str | None = None,
     data_file_path: str | None = None,
     output_csv: str | None = None,
     ft_corpus: str | None = None,
 ) -> pd.DataFrame:
-    """Run inference on an RCT holdout via a SageMaker TGI endpoint.
+    """Run inference on an RCT holdout via a SageMaker endpoint.
 
-    Deploys `huggingface_model_id` (a Hugging Face Hub repo id, typically a
-    fine-tuned checkpoint or the model's instruct base) on a SageMaker
-    real-time endpoint sized by the model's `inference_instance_type`,
-    invokes the endpoint per prompt with a logit pass, and tears the
-    endpoint down on exit. Writes
+    The base model is always read from `cfg["models"][model_key]["base_model"]`.
+    For `condition="instruct"`, that base is served alone via TGI. For
+    `condition="finetuned"`, the base is served with `adapter_id` applied via
+    PEFT (no merging). Tears the endpoint down on exit. Writes
     `data/synthetic/{rct_id}_{model_key}_{condition}.csv` unless
     `output_csv` overrides. Columns follow `data/synthetic/codebook_synthetic.csv`.
 
     Args:
         config_path: Path to config.yaml.
         rct_id: Key under `rcts:` in config.yaml (e.g. "duch_et_al_2023").
-        model_key: Key under `models:` in config.yaml (e.g. "llama_8b_base").
-        huggingface_model_id: Hugging Face Hub repo id to serve via TGI
-            (e.g. "iamraymondlow/llama-31-8b-instruct-finetuned-duch").
+        model_key: Key under `models:` in config.yaml (e.g. "llama_8b").
         condition: "instruct" or "finetuned".
+        adapter_id: Hugging Face Hub repo id of the LoRA adapter to apply.
+            Required when `condition="finetuned"`; ignored otherwise.
         data_file_path: Override for the RCT data CSV. Defaults to the
             `data_file` entry under the RCT config.
         output_csv: Override for the output CSV path.
         ft_corpus: Label for the training corpus used to produce
-            `huggingface_model_id`. Populates the codebook's `ft_corpus` column.
+            `adapter_id`. Populates the codebook's `ft_corpus` column.
     """
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
@@ -292,6 +291,15 @@ def run_inference_codebook(
     if not instance_type:
         raise KeyError(
             f"Model {model_key!r} is missing `inference_instance_type` in config.yaml."
+        )
+
+    base_model = model_cfg.get("base_model")
+    if not base_model:
+        raise KeyError(f"Model {model_key!r} is missing `base_model` in config.yaml.")
+    if condition == "finetuned" and not adapter_id:
+        raise ValueError(
+            "`adapter_id` is required when condition='finetuned' "
+            "(the LoRA adapter to apply on top of the base model)."
         )
 
     with open(rct_cfg["prompt_file"]) as f:
@@ -321,8 +329,9 @@ def run_inference_codebook(
     # Stable across resumed runs since the progress CSV is keyed on the same slug.
     endpoint_name = experiment_version.lower().replace("_", "-").replace(".", "")[:63]
 
+    serving_adapter_id = adapter_id if condition == "finetuned" else None
     predictor, endpoint_name = deploy_sagemaker_endpoint(
-        huggingface_model_id=huggingface_model_id,
+        huggingface_model_id=base_model,
         endpoint_name=endpoint_name,
         instance_type=instance_type,
         max_input_tokens=inference.get("max_seq_length", 2048),
@@ -330,6 +339,7 @@ def run_inference_codebook(
         dtype=("bfloat16" if inference.get("precision") == "bf16" else "float16"),
         startup_timeout=sm_cfg.get("endpoint_startup_timeout", 900),
         num_shard=model_cfg.get("inference_num_shard"),
+        adapter_id=serving_adapter_id,
     )
 
     try:
@@ -343,6 +353,7 @@ def run_inference_codebook(
             temperature=inference.get("temperature", 1.0),
             max_tokens=inference.get("max_tokens", 1),
             logprobs_top_k=inference.get("logprobs_top_k", 5),
+            adapter_id=serving_adapter_id,
         )
     finally:
         # Stop the per-second meter even if inference raised mid-loop.
@@ -366,8 +377,9 @@ def run_inference_codebook(
     )
     seed = (training.get("seeds") or [None])[0] if is_finetuned else None
 
-    ft_base_model = model_cfg.get("base_model") if is_finetuned else None
+    ft_base_model = base_model if is_finetuned else None
     ft_corpus_value = ft_corpus if is_finetuned else None
+    model_id_value = adapter_id if is_finetuned else base_model
 
     out = pd.DataFrame(
         {
@@ -383,7 +395,7 @@ def run_inference_codebook(
             "model_family": family,
             "model_version": version,
             "model_size": size,
-            "model_id": huggingface_model_id,
+            "model_id": model_id_value,
             "fine_tuned": is_finetuned,
             "ft_base_model": ft_base_model,
             "ft_corpus": ft_corpus_value,
@@ -461,12 +473,15 @@ def main() -> None:
     parser.add_argument("--rct-id", required=True)
     parser.add_argument("--model-key", required=True)
     parser.add_argument(
-        "--huggingface-model-id",
-        required=True,
-        help="Hugging Face Hub repo id to serve via TGI on SageMaker.",
+        "--condition", default="finetuned", choices=["instruct", "finetuned"]
     )
     parser.add_argument(
-        "--condition", default="finetuned", choices=["instruct", "finetuned"]
+        "--adapter-id",
+        default=None,
+        help=(
+            "Hugging Face Hub repo id of the LoRA adapter to apply on top of "
+            "the base model. Required when --condition=finetuned."
+        ),
     )
     parser.add_argument("--data-file", default=None)
     parser.add_argument("--output-csv", default=None)
@@ -481,8 +496,8 @@ def main() -> None:
         config_path=args.config,
         rct_id=args.rct_id,
         model_key=args.model_key,
-        huggingface_model_id=args.huggingface_model_id,
         condition=args.condition,
+        adapter_id=args.adapter_id,
         data_file_path=args.data_file,
         output_csv=args.output_csv,
         ft_corpus=args.ft_corpus,
