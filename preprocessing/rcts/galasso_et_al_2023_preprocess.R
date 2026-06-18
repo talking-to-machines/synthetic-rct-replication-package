@@ -85,7 +85,7 @@ order_any <- function(df, vars) {
 }
 
 recode_to_character <- function(df, var, map, missing_any = FALSE,
-                                missing_codes = NULL, missing_label = "N/A") {
+                                missing_codes = NULL, missing_label = NA_character_) {
   if (!(var %in% names(df))) return(df)
 
   source <- df[[var]]
@@ -117,7 +117,7 @@ recode_many_to_character <- function(df, vars, map, missing_any = FALSE,
 }
 
 stringify_variable <- function(df, var, missing_any = FALSE,
-                               missing_codes = NULL, missing_label = "N/A") {
+                               missing_codes = NULL, missing_label = NA_character_) {
   if (!(var %in% names(df))) return(df)
 
   source <- df[[var]]
@@ -289,7 +289,7 @@ live <- blank_character(nrow(df))
 if ("livealone_1" %in% names(df)) live <- assign_if(live, num_eq(df$livealone_1, 1), "I live alone")
 if ("livefamily_1" %in% names(df)) live <- assign_if(live, num_eq(df$livefamily_1, 1), "I live with my family")
 if ("liveothers_1" %in% names(df)) live <- assign_if(live, num_eq(df$liveothers_1, 1), "I live with other people who are not my family")
-live[live == ""] <- "N/A"
+live[live == ""] <- NA_character_
 df$live <- live
 
 df <- drop_any(df, c("livefamily_1", "livealone_1", "liveothers_1"))
@@ -298,8 +298,7 @@ live_6 <- blank_character(nrow(df))
 if ("livealone_2" %in% names(df)) live_6 <- assign_if(live_6, num_eq(df$livealone_2, 1), "I live alone")
 if ("livefamily_2" %in% names(df)) live_6 <- assign_if(live_6, num_eq(df$livefamily_2, 1), "I live with my family")
 if ("liveothers_2" %in% names(df)) live_6 <- assign_if(live_6, num_eq(df$liveothers_2, 1), "I live with other people who are not my family")
-# Preserves original Stata code: replace live_6 = "N/A" if live == ""
-live_6[df$live == ""] <- "N/A"
+live_6[live_6 == ""] <- NA_character_
 df$live_6 <- live_6
 
 df <- drop_any(df, c("livefamily_2", "livealone_2", "liveothers_2"))
@@ -325,6 +324,7 @@ if ("liberal_2" %in% names(df)) political_aff_6 <- assign_if(political_aff_6, nu
 if ("centrist_2" %in% names(df)) political_aff_6 <- assign_if(political_aff_6, num_eq(df$centrist_2, 1), "Centrist")
 if ("conservative_2" %in% names(df)) political_aff_6 <- assign_if(political_aff_6, num_eq(df$conservative_2, 1), "Conservative")
 if ("ideologydontknow_2" %in% names(df)) political_aff_6 <- assign_if(political_aff_6, num_eq(df$ideologydontknow_2, 1), "I don't know")
+political_aff_6[political_aff_6 == ""] <- NA_character_
 df$political_aff_6 <- political_aff_6
 
 df <- drop_any(df, c("liberal_2", "centrist_2", "conservative_2", "ideologydontknow_2"))
@@ -442,7 +442,7 @@ questions <- c(
   covidhome_1 = "Has anyone in your household had covid?",
   covidfamily_1 = "Has anyone in your family had covid?",
   covidfriends_1 = "Has any of your friends had covid?",
-  trustscientists_2 = "After 6 months: Do you trust scientists?",
+  trustscientists_2 = "The following questions were asked approximately 6 months after the baseline survey in December 2020. After 6 months: Do you trust scientists?",
   gentrust_2 = "After 6 months: Do you generally trust others?",
   virus_china_2 = "After 6 months: On a scale from 0 to 10 - where 0 means 'not at all likely' and 10 means 'completely certain' - how likely do you think it is that China is responsible for the outbreak of the virus?",
   feeling_nointerest_2 = "After 6 months: How often do you experience low interest or pleasure in general?",
@@ -547,6 +547,12 @@ final_order <- c(
 df <- order_any(df, final_order)
 df <- drop_any(df, c("vac_infect_1", "vac_contag_1", "vac_country_1", "vac_econ_1"))
 
-df$subject_id <- c("subject_id", as.character(seq_len(nrow(df) - 1)))
-df <- df[, c("subject_id", setdiff(names(df), "subject_id")), drop = FALSE]
+# Keep only units with observed vaccination outcome (wave 2 completers).
+header <- df[1, , drop = FALSE]
+data   <- df[-1, , drop = FALSE]
+data   <- data[!is.na(data$vaccinedone) & data$vaccinedone != "NA", , drop = FALSE]
+df     <- rbind(header, data)
+
+df$ID <- c("ID", as.character(seq_len(nrow(df) - 1)))
+df <- df[, c("ID", setdiff(names(df), "ID")), drop = FALSE]
 write_clean_csv(df, output_file)

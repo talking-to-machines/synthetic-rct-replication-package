@@ -753,10 +753,10 @@ df_final <- df %>%
   # Preserve only selected variables in desired order
   select(!!vars_selected)
 
-# Standardize: rename SCRAM -> subject_id (the record identifier).
-names(df_final)[names(df_final) == "SCRAM"] <- "subject_id"
-df_final$subject_id[1] <- "subject_id"
-df_final <- df_final[, c("subject_id", setdiff(names(df_final), "subject_id")), drop = FALSE]
+# Standardize: rename SCRAM -> ID (the record identifier).
+names(df_final)[names(df_final) == "SCRAM"] <- "ID"
+df_final$ID[1] <- "ID"
+df_final <- df_final[, c("ID", setdiff(names(df_final), "ID")), drop = FALSE]
 
 write_clean_csv(df_final,
                 file.path("data", "processed", "surveys", "hps_2021", "hps_2021_data.csv"))

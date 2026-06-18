@@ -62,7 +62,7 @@ data_decoded <- apply_human_readable(data_subset, lookup) %>%
 # Continuous scales (falk*) use a prose anchor without enumerated options.
 spec <- tribble(
   ~name,          ~question,                                                                                                                                                                                                             ~response_levels,
-  "subject_id",   NA_character_,                                                                                                                                                                                                          NA_character_,
+  "ID",   NA_character_,                                                                                                                                                                                                          NA_character_,
   "treatment",    NA_character_,                                                                                                                                                                                                          NA_character_,
   "vaccinated",   "Have you got a first shot of a COVID-19 vaccine within the first 30 days after the vaccine became available to you? Available means that vaccinations started for people in your age group in your region.",            NA_character_,
   "largeregions", "In which region do you live?",                                                                                                                                                                                         NA_character_,
@@ -71,7 +71,7 @@ spec <- tribble(
   "female",       "Do you identify yourself as a woman or a man?",                                                                                                                                                                        NA_character_,
   "civilstatus",  "What describes your civil status best?",                                                                                                                                                                               NA_character_,
   "education",    "What education do you have (fill in the highest you have)?",                                                                                                                                                           NA_character_,
-  "occupation",   "What is your employment status?",                                                                                                                                                                                      NA_character_,
+  "occupation",   "What is your employment status?",                                                                                                                                                                                                      "Work; Unemployed; Student; Pensioner; Other",
   "income",       "How much in Swedish kronor is your household's total income per month after taxes including public benefits? Calculate also your loan if you are a student. Please answer even if you are not sure.",                  NA_character_,
   "haschildren",  "Does any child live in your household?",                                                                                                                                                                               NA_character_,
   "mother",       "Where was your mother born?",                                                                                                                                                                                          NA_character_,
@@ -93,6 +93,6 @@ spec <- tribble(
 
 header_row <- build_inline_question_header(spec)
 df <- inject_question_header(data_decoded, header_row)
-df <- ensure_subject_id_first(df)
+df <- ensure_ID_first(df)
 
 write_clean_csv(df, output_path)

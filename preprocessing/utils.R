@@ -6,16 +6,22 @@
 # pivots, country loops) stay in the per-source script.
 #
 # Output conventions enforced here:
-#   - First column is `subject_id`; remaining columns follow original-study
-#     order, with `treatment` renamed in place. Outcome variables keep their
-#     original study-specific names — no rename to `outcome` / `outcome_1` etc.
-#   - Row 1 is the question header. For trivial questions (gender, etc.) the
-#     header is the bare label. For non-trivial questions with discrete options
-#     the header is `<label> Answer one of the following options: <options>`.
-#     For continuous-scale variables with a prose preface in `label_for_options`
-#     but no enumerated `options`, the prose is preserved.
-#   - Raw variable-code labels are kept only for `subject_id` and `treatment`.
-#   - Output is written with default CSV quoting and `na = NA` (not `na = ""`).
+#   - First column is `ID`; remaining columns follow original-study
+#     order, with `treatment` renamed in place. All other variables keep their
+#     original study-specific names.
+#   - Row 1 is the question text. Headers are constructed by the following
+#     decision tree:
+#     1. For variables in `raw_label_vars` (ID, treatment): the
+#        variable name is preserved as-is.
+#     2. If enumerated discrete options are present: "<label> Answer one of
+#        the following options: <options>".
+#     3. If no enumerated options but `label_for_options` contains substantive
+#        content (e.g., scale-anchor descriptions): "<label> <cleaned_text>".
+#     4. Otherwise: bare label verbatim from the original survey.
+#   - `ID` is kept as the raw identifier. All other variables, including
+#     `treatment`, are decoded into their human-readable labels, except where the
+#     source already stores them as text.
+#   - Output is written with default CSV quoting and missing values set as NA_character_.
 
 suppressPackageStartupMessages({
   library(readr)
@@ -104,7 +110,7 @@ apply_human_readable <- function(df, lookup) {
 }
 
 # Cleanup applied to `label_for_options` when it is being included in the
-# question header. Default policy: minimize adaptations — start with the
+# question text. Default policy: minimize adaptations — start with the
 # verbatim survey label, only attach `label_for_options` content if it is
 # substantive (e.g., scale-anchor description). Synthetic format instructions
 # like "Please, answer with a number between 1 and 100." are dropped.
@@ -127,9 +133,9 @@ clean_label_for_options <- function(s) {
   trimws(s)
 }
 
-# Build a 1-row tibble of question-header text, indexed by variable name.
+# Build a 1-row tibble of question text, indexed by variable name.
 # Rule:
-#   - For names in `raw_label_vars`: header is the variable name itself.
+#   - For names in `raw_label_vars`: text is the variable name itself.
 #   - If `options` is populated: "<label> <response_phrase>: <options>"
 #     (universal preface; replaces whatever per-row preface previously lived
 #     in `label_for_options`).
@@ -139,7 +145,7 @@ clean_label_for_options <- function(s) {
 #   - Otherwise: the bare label, verbatim from the original survey.
 build_question_header <- function(mapping,
                                   response_phrase = "Answer one of the following options",
-                                  raw_label_vars = c("subject_id", "treatment")) {
+                                  raw_label_vars = c("ID", "treatment")) {
   mapping %>%
     filter(selected == 1) %>%
     distinct(name, .keep_all = TRUE) %>%
@@ -164,11 +170,11 @@ build_question_header <- function(mapping,
 # Duch 2023, Afrobarometer, Meriggi).
 # ---------------------------------------------------------------------------
 
-# Build a 1-row tibble of question-header text from an inline `spec` tibble
+# Build a 1-row tibble of question text from an inline `spec` tibble
 # with columns `name`, `question`, `response_levels`.
 #
 # Rule:
-#   - For names in `raw_label_vars`: header is the variable name itself.
+#   - For names in `raw_label_vars`: text is the variable name itself.
 #   - If `response_levels` is NA or empty: bare question (verbatim).
 #   - If `response_levels` contains ";" (discrete enumerated options): append
 #         "<question> Answer one of the following options: <opts>"
@@ -178,7 +184,7 @@ build_question_header <- function(mapping,
 build_inline_question_header <- function(spec,
                                          response_phrase = "Answer one of the following options",
                                          continuous_phrase = "Answer with",
-                                         raw_label_vars = c("subject_id", "treatment")) {
+                                         raw_label_vars = c("ID", "treatment")) {
   spec %>%
     mutate(
       header_text = case_when(
@@ -204,7 +210,7 @@ build_inline_question_header <- function(spec,
 # ---------------------------------------------------------------------------
 
 # Coerce both header (1-row tibble) and data to character, then bind. The
-# result has the question-header row first, data rows below. Embedded
+# result has the question text row first, data rows below. Embedded
 # carriage-return / line-feed runs in header cells (common when mapping CSVs
 # have multi-line label cells with Windows line endings) are collapsed to a
 # single space.
@@ -216,24 +222,22 @@ inject_question_header <- function(df, header_row) {
   bind_rows(header_chr[, names(data_chr), drop = FALSE], data_chr)
 }
 
-# Move `subject_id` to position 1; preserve all other columns in current
-# order. If subject_id is absent, append it at position 1 with sequential row
-# numbers AFTER the header row (the header gets the literal "subject_id").
-ensure_subject_id_first <- function(df, header_already_injected = TRUE) {
-  if (!"subject_id" %in% names(df)) {
+# Move `ID` to position 1; preserve all other columns in current
+# order. If ID is absent, append it at position 1 with sequential row
+# numbers AFTER the header row (the header gets the literal "ID").
+ensure_ID_first <- function(df, header_already_injected = TRUE) {
+  if (!"ID" %in% names(df)) {
     n <- nrow(df)
     if (header_already_injected) {
-      df$subject_id <- c("subject_id", as.character(seq_len(n - 1)))
+      df$ID <- c("ID", as.character(seq_len(n - 1)))
     } else {
-      df$subject_id <- as.character(seq_len(n))
+      df$ID <- as.character(seq_len(n))
     }
   }
-  df[, c("subject_id", setdiff(names(df), "subject_id")), drop = FALSE]
+  df[, c("ID", setdiff(names(df), "ID")), drop = FALSE]
 }
 
-# Write a cleaned CSV. Uses default quoting and `na = NA` (so missing values
-# emit as a literal "NA" rather than the Stata-style empty string convention
-# that earlier scripts used). UTF-8 encoding.
+# Write a cleaned CSV. Uses default quoting and `na = NA`. UTF-8 encoding.
 write_clean_csv <- function(df, path) {
   dir <- dirname(path)
   if (!dir.exists(dir)) dir.create(dir, recursive = TRUE, showWarnings = FALSE)

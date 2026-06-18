@@ -469,6 +469,6 @@ questions <- c(
 df <- add_question_row_stata_style(df, questions)
 
 # Export ----------------------------------------------------------------------
-df$subject_id <- c("subject_id", as.character(seq_len(nrow(df) - 1)))
-df <- df[, c("subject_id", setdiff(names(df), "subject_id")), drop = FALSE]
+df$ID <- c("ID", as.character(seq_len(nrow(df) - 1)))
+df <- df[, c("ID", setdiff(names(df), "ID")), drop = FALSE]
 write_clean_csv(df, output_file)

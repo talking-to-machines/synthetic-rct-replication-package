@@ -91,7 +91,7 @@ What each make target does:
 ## Pretrained adapters
 
 Project publishes one LoRA adapter per fine-tuned open model (4 in total:
-llama_8b, llama_70b, qwen_8b, qwen_70b). Each adapter is hosted on the
+llama_8b, llama_70b, qwen_8b, qwen_32b). Each adapter is hosted on the
 HuggingFace Hub and mirrored in outputs/adapters/. A table lists, for
 each adapter: the model name, the HuggingFace Hub URL, the number of
 trainable parameters, and the on-disk size of the adapter weights.

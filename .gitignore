@@ -9,5 +9,6 @@ temp_*
 tmp_*
 data/human/
 data/old/
+data/preprocessed/
 compare_*
 .claude

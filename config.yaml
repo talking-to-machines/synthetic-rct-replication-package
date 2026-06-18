@@ -127,16 +127,16 @@ models:
     inference_instance_type: ml.g5.2xlarge
     inference_num_shard: 1
 
-  qwen_70b:
-    base_model: Qwen/Qwen3-70B
+  qwen_32b:
+    base_model: Qwen/Qwen3-32B
     family: qwen
     type: open
-    training_instance_type: ml.p4d.24xlarge
-    inference_instance_type: ml.g5.48xlarge
+    training_instance_type: ml.g6e.12xlarge  # 4x L40S 48GB
+    inference_instance_type: ml.g5.48xlarge  # 8x A10G 24GB; 8-way TP shards weights to ~8GB/GPU
     inference_num_shard: 8                   # tensor-parallel across all 8 A10G
     training:
-      batch_size: 1                    # 8 GPUs * 1 per-device * 1 accum = effective 8
-      fsdp: true                       # 70B weights don't fit per-GPU; shard via FSDP
+      batch_size: 2                    # 4 GPUs * 2 per-device * 1 accum = effective 8
+      fsdp: true                       # 32B weights (64GB) don't fit per-GPU; shard via FSDP
       gradient_checkpointing: true     # required for activations to fit alongside FSDP shard
 
   olmo2_7b:

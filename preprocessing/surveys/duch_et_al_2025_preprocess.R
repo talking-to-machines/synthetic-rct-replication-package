@@ -333,9 +333,9 @@ process_country <- function(setting) {
   colnames(q_item) <- colnames(df)
 
   df_out <- rbind(q_item, as.data.frame(lapply(df, as.character), stringsAsFactors = FALSE))
-  names(df_out)[names(df_out) == "ID"] <- "subject_id"
-  df_out$subject_id[1] <- "subject_id"
-  df_out <- df_out[, c("subject_id", setdiff(names(df_out), "subject_id")), drop = FALSE]
+  names(df_out)[names(df_out) == "ID"] <- "ID"
+  df_out$ID[1] <- "ID"
+  df_out <- df_out[, c("ID", setdiff(names(df_out), "ID")), drop = FALSE]
 
   output_path <- file.path(processed_dir,
                            paste0(source_id, "_", tolower(setting$country_filter), "_data.csv"))

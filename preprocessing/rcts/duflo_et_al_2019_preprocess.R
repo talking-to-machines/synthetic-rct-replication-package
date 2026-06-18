@@ -51,6 +51,6 @@ mapping <- mapping %>% mutate(name = if_else(name == "group", "treatment", name)
 
 header_row <- build_question_header(mapping)
 df <- inject_question_header(data_decoded, header_row)
-df <- ensure_subject_id_first(df)
+df <- ensure_ID_first(df)
 
 write_clean_csv(df, output_path)

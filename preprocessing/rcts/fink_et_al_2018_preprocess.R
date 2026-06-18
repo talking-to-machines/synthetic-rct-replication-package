@@ -1569,8 +1569,8 @@ dat <- order_any(dat, final_order)
 
 # Export ----------------------------------------------------------------------
 if ("household_id" %in% names(dat)) {
-  names(dat)[names(dat) == "household_id"] <- "subject_id"
-  dat$subject_id[1] <- "subject_id"
-  dat <- dat[, c("subject_id", setdiff(names(dat), "subject_id")), drop = FALSE]
+  names(dat)[names(dat) == "household_id"] <- "ID"
+  dat$ID[1] <- "ID"
+  dat <- dat[, c("ID", setdiff(names(dat), "ID")), drop = FALSE]
 }
 write_clean_csv(dat, output_file)

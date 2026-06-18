@@ -804,7 +804,7 @@ qual <- drop_any(
     "N", "O", "P", "Q", "R", "S"
   )
 )
-qual <- rename_by_map(qual, c("uniqueid" = "userid"))
+qual <- rename_by_map(qual, c("unique id" = "userid"))
 
 qual <- replace_values(
   qual,
@@ -1141,8 +1141,8 @@ dat <- rename_by_map(dat, final_rename_map)
 dat <- drop_any(dat, c("vaccine_will", "hesitancy"))
 
 if ("userid" %in% names(dat)) {
-  names(dat)[names(dat) == "userid"] <- "subject_id"
-  dat$subject_id[1] <- "subject_id"
-  dat <- dat[, c("subject_id", setdiff(names(dat), "subject_id")), drop = FALSE]
+  names(dat)[names(dat) == "userid"] <- "ID"
+  dat$ID[1] <- "ID"
+  dat <- dat[, c("ID", setdiff(names(dat), "ID")), drop = FALSE]
 }
 write_clean_csv(dat, output_file)

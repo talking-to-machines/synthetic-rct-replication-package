@@ -110,10 +110,10 @@ df <- bind_rows(questionnaire, df) %>%
                 ))))
 
 # Subject ID = uniqid (native).
-names(df)[names(df) == "uniqid"] <- "subject_id"
-df <- df[, c("subject_id", setdiff(names(df), "subject_id")), drop = FALSE]
+names(df)[names(df) == "uniqid"] <- "ID"
+df <- df[, c("ID", setdiff(names(df), "ID")), drop = FALSE]
 
-# Header row's subject_id cell should be the literal "subject_id".
-df$subject_id[1] <- "subject_id"
+# Header row's ID cell should be the literal "ID".
+df$ID[1] <- "ID"
 
 write_clean_csv(df, output_path)

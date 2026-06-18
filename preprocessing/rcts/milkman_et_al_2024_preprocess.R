@@ -271,8 +271,8 @@ df <- drop_prefixes(df, c("mis_", "med_"))
 
 # Export ----------------------------------------------------------------------
 if ("de_id" %in% names(df)) {
-  names(df)[names(df) == "de_id"] <- "subject_id"
-  df$subject_id[1] <- "subject_id"
-  df <- df[, c("subject_id", setdiff(names(df), "subject_id")), drop = FALSE]
+  names(df)[names(df) == "de_id"] <- "ID"
+  df$ID[1] <- "ID"
+  df <- df[, c("ID", setdiff(names(df), "ID")), drop = FALSE]
 }
 write_clean_csv(df, output_file)

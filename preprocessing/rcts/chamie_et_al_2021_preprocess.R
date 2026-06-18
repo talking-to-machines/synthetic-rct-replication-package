@@ -801,8 +801,8 @@ final_df <- drop_any(final_df, c("intid", "Mo3Mo6retest"))
 
 # Export ----------------------------------------------------------------------
 if ("studyid" %in% names(final_df)) {
-  names(final_df)[names(final_df) == "studyid"] <- "subject_id"
-  final_df$subject_id[1] <- "subject_id"
-  final_df <- final_df[, c("subject_id", setdiff(names(final_df), "subject_id")), drop = FALSE]
+  names(final_df)[names(final_df) == "studyid"] <- "ID"
+  final_df$ID[1] <- "ID"
+  final_df <- final_df[, c("ID", setdiff(names(final_df), "ID")), drop = FALSE]
 }
 write_clean_csv(final_df, output_file)

@@ -121,7 +121,7 @@ for (country in c("Sweden", "US")) {
   header_row   <- build_inline_question_header(country_spec)
 
   df <- inject_question_header(df_country, header_row)
-  df <- ensure_subject_id_first(df)
+  df <- ensure_ID_first(df)
 
   output_path <- file.path(processed_dir,
                            paste0(source_id, "_", tolower(country), "_data.csv"))

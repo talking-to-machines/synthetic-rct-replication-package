@@ -95,12 +95,13 @@ dat_clean <- dat_clean %>%
                               TRUE ~ NA_character_))
 
 # Question label adaptations for variables without survey items.
+dat_clean[1, 'p_i_Q2.2']   <- "What is your current age in years?"
 dat_clean[1, 'p_i_Q2.3']   <- "What is your gender?"
 dat_clean[1, 'p_i_Q2.4_1'] <- "Which region do you live in?"
 dat_clean[1, 'p_i_Q2.4_2'] <- "Which district do you live in?"
 dat_clean[1, 'p_i_Q144']   <- "How much (in Ghanaian Cedis) on average does your household spend in a typical week on food?"
 dat_clean[1, 'p_i_Q145']   <- "How much (in Ghanaian Cedis) on average does your household spend in a typical week on non-food items (electricity, water, rent, school fees)?"
-dat_clean[1, 'p_i_Q146']   <- "How would you rate the overall economic or financial condition of your household today?"
+dat_clean[1, 'p_i_Q146']   <- "How would you rate the overall economic or financial condition of your household today? Answer one of the following options: Very good, Good, Neither good nor bad, Bad, Very bad"
 dat_clean[1, 'p_i_Q91']    <- "Do you have a registered mobile number?"
 
 # Endline outcomes recoded.
@@ -114,8 +115,9 @@ dat_clean <- dat_clean %>%
                             TRUE ~ NA_character_)
   )
 dat_clean[1, 'vaccine_reported_combo'] <- dat_clean[1, 'p_ii_Q8.1']
-dat_clean[1, 'ActVacApril'] <- 'Have you received a COVID-19 vaccine, as verified in the records of the Ghanaian District Health Offices? Answer one of the following options: Yes, No'
+dat_clean[1, 'ActVacApril'] <- 'You were told you would be contacted after six weeks to verify your vaccination status. Six weeks have now passed. Have you received a COVID-19 vaccine, as verified in the records of the Ghanaian District Health Offices? Answer one of the following options: Yes, No'
 dat_clean[1, 'FamilyVillages'] <- dat_clean[1, 'p_ii_Q27']
+dat_clean[1, 'vaccine_chance'] <- sub(" - 4$", "", dat_clean[1, 'vaccine_chance'])
 
 vars_selected <- c(
   'SubjectID', 'individual_treatment',
@@ -133,12 +135,19 @@ vars_selected <- c(
 )
 dat_clean <- dat_clean %>% select(!!!vars_selected)
 
+dat_clean <- dat_clean %>%
+  mutate(vaccine_chance = if_else(
+    row_number() > 1 & !is.na(vaccine_chance),
+    paste0(vaccine_chance, "%"),
+    vaccine_chance
+  ))
+
 # Standardize required columns.
-names(dat_clean)[names(dat_clean) == "SubjectID"] <- "subject_id"
+names(dat_clean)[names(dat_clean) == "SubjectID"] <- "ID"
 names(dat_clean)[names(dat_clean) == "individual_treatment"] <- "treatment"
-dat_clean$subject_id[1] <- "subject_id"
+dat_clean$ID[1] <- "ID"
 dat_clean$treatment[1]  <- "treatment"
 
-dat_clean <- dat_clean[, c("subject_id", setdiff(names(dat_clean), "subject_id")), drop = FALSE]
+dat_clean <- dat_clean[, c("ID", setdiff(names(dat_clean), "ID")), drop = FALSE]
 
 write_clean_csv(dat_clean, file.path(processed_dir, paste0(source_id, "_data.csv")))

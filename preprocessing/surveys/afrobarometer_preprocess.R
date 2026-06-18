@@ -290,9 +290,9 @@ df <-
         as.data.frame(lapply(df, as.character),
                       stringsAsFactors = FALSE))
 
-names(df)[names(df) == "RESPNO"] <- "subject_id"
-df$subject_id[1] <- "subject_id"
-df <- df[, c("subject_id", setdiff(names(df), "subject_id")), drop = FALSE]
+names(df)[names(df) == "RESPNO"] <- "ID"
+df$ID[1] <- "ID"
+df <- df[, c("ID", setdiff(names(df), "ID")), drop = FALSE]
 
 write_clean_csv(df,
                 file.path("data", "processed", "surveys", "afrobarometer",

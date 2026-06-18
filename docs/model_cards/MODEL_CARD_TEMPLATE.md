@@ -4,9 +4,9 @@ This template is used to create model cards for all 9 model x condition
 configurations in the project. There are three card types:
 
 - **Instruct (open-source):** Pre-trained instruction-tuned model, no
-  fine-tuning. 4 cards: llama_8b, llama_70b, qwen_8b, qwen_70b.
+  fine-tuning. 4 cards: llama_8b, llama_70b, qwen_8b, qwen_32b.
 - **Fine-tuned (LoRA adapter):** LoRA adapter trained on the project's
-  fine-tuning corpus. 4 cards: llama_8b, llama_70b, qwen_8b, qwen_70b.
+  fine-tuning corpus. 4 cards: llama_8b, llama_70b, qwen_8b, qwen_32b.
 - **Instruct (API):** Proprietary model accessed via API. 1 card: gpt5.
 
 Sections marked [FINETUNED ONLY] or [API ONLY] should be included only

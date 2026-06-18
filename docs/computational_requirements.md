@@ -24,15 +24,15 @@
 | Fine-tuning | llama_8b | | |
 | Fine-tuning | llama_70b | | |
 | Fine-tuning | qwen_8b | | |
-| Fine-tuning | qwen_70b | | |
+| Fine-tuning | qwen_32b | | |
 | Inference | llama_8b (instruct) | | |
 | Inference | llama_8b (finetuned) | | |
 | Inference | llama_70b (instruct) | | |
 | Inference | llama_70b (finetuned) | | |
 | Inference | qwen_8b (instruct) | | |
 | Inference | qwen_8b (finetuned) | | |
-| Inference | qwen_70b (instruct) | | |
-| Inference | qwen_70b (finetuned) | | |
+| Inference | qwen_32b (instruct) | | |
+| Inference | qwen_32b (finetuned) | | |
 | Inference | gpt5 (instruct) | | N/A |
 | R analysis | all | | N/A |
 | **Total** | | | |

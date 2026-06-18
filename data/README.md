@@ -145,8 +145,8 @@ synthetic/
 ├── rct_01_llama_70b_finetuned.csv
 ├── rct_01_qwen_8b_instruct.csv
 ├── rct_01_qwen_8b_finetuned.csv
-├── rct_01_qwen_70b_instruct.csv
-├── rct_01_qwen_70b_finetuned.csv
+├── rct_01_qwen_32b_instruct.csv
+├── rct_01_qwen_32b_finetuned.csv
 ├── rct_01_gpt5_instruct.csv
 └── ...                              (same pattern for rct_02--rct_04)
 ```
@@ -268,7 +268,7 @@ to a training file.
 ```
 
 Where `{model}` is one of: `llama_8b`, `llama_70b`, `qwen_8b`,
-`qwen_70b`, `gpt5`. And `{condition}` is one of: `instruct`,
+`qwen_32b`, `gpt5`. And `{condition}` is one of: `instruct`,
 `finetuned` (GPT-5 has `instruct` only).
 
 ---

@@ -258,9 +258,9 @@ combined_aligned <- add_missing(combined, all_cols)
 
 final <- rbind(codebook_aligned, combined_aligned)
 
-# Synthesize subject_id (Arce has no native participant identifier).
-final$subject_id <- c("subject_id", as.character(seq_len(nrow(final) - 1)))
-final <- final[, c("subject_id", setdiff(names(final), "subject_id")), drop = FALSE]
+# Synthesize ID (Arce has no native participant identifier).
+final$ID <- c("ID", as.character(seq_len(nrow(final) - 1)))
+final <- final[, c("ID", setdiff(names(final), "ID")), drop = FALSE]
 
 write_clean_csv(final, file.path(saving_path, "arce_et_al_2021_data.csv"))
 
