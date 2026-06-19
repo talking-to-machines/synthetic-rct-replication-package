@@ -96,14 +96,6 @@ models:
     inference_instance_type: ml.g5.2xlarge   # 1x A10G 24GB
     inference_num_shard: 1
 
-  llama_8b_base:
-    base_model: meta-llama/Llama-3.1-8B
-    family: llama
-    type: open
-    training_instance_type: ml.g6e.2xlarge
-    inference_instance_type: ml.g5.2xlarge
-    inference_num_shard: 1
-
   llama_70b:
     base_model: meta-llama/Llama-3.1-70B-Instruct
     family: llama
